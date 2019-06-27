@@ -3,9 +3,12 @@ from . import core
 
 
 class AstronomicAngle(core.AstronomicAngle):
-    """"Astronomical angles"""
-    pass
+    """Initialize some astronomic data useful for nodal corrections.
 
+Args:
+  epoch (float, optional): Desired UTC time
+"""
+    pass
 
 class Wave(core.Wave):
     """Tidal wave properties"""
