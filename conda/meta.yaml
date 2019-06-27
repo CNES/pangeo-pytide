@@ -1,5 +1,5 @@
 package:
-  name: pyinterp
+  name: pytide
   version: 0.1
 
 source:
