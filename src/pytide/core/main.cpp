@@ -60,115 +60,170 @@ PYBIND11_MODULE(core, m) {
 
   py::class_<AstronomicAngle>(m, "AstronomicAngle")
       .def(py::init<>())
-      .def(py::init<const double>(), py::arg("epoch"))
-      .def_property_readonly("t", &AstronomicAngle::t)
-      .def_property_readonly("n", &AstronomicAngle::n)
-      .def_property_readonly("h", &AstronomicAngle::h)
-      .def_property_readonly("s", &AstronomicAngle::s)
-      .def_property_readonly("p1", &AstronomicAngle::p1)
-      .def_property_readonly("p", &AstronomicAngle::p)
-      .def_property_readonly("i", &AstronomicAngle::i)
-      .def_property_readonly("xi", &AstronomicAngle::xi)
-      .def_property_readonly("nu", &AstronomicAngle::nu)
-      .def_property_readonly("x1ra", &AstronomicAngle::x1ra)
-      .def_property_readonly("r", &AstronomicAngle::r)
-      .def_property_readonly("nuprim", &AstronomicAngle::nuprim)
-      .def_property_readonly("nusec", &AstronomicAngle::nusec);
+      .def(py::init<const double>(), py::arg("epoch"), R"__doc__(
+Initialize some astronomic data useful for nodal corrections.
 
-  py::class_<Wave, std::shared_ptr<Wave>> wave(m, "Wave");
+Args:
+  epoch (float, optional): Desired UTC time)__doc__")
+      .def_property_readonly("t", &AstronomicAngle::t, "Hour angle of mean sun")
+      .def_property_readonly("n", &AstronomicAngle::n,
+                             "Longitude of moon's node")
+      .def_property_readonly("h", &AstronomicAngle::h,
+                             "Mean longitude of the sun")
+      .def_property_readonly("s", &AstronomicAngle::s,
+                             "Mean longitude of the moon")
+      .def_property_readonly("p1", &AstronomicAngle::p1,
+                             "Mean longitude of solar perigee")
+      .def_property_readonly("p", &AstronomicAngle::p,
+                             "Mean longitude of lunar perigee")
+      .def_property_readonly(
+          "i", &AstronomicAngle::i,
+          "Obliquity of lunar orbit with respect to earth's equator")
+      .def_property_readonly("xi", &AstronomicAngle::xi,
+                             "Longitude in moon's orbit of lunar intersection")
+      .def_property_readonly("nu", &AstronomicAngle::nu,
+                             "Right ascension of lunar intersection")
+      .def_property_readonly("x1ra", &AstronomicAngle::x1ra,
+                             "Factor in amplitude of constituent :math:`L_{2}`")
+      .def_property_readonly("r", &AstronomicAngle::r,
+                             "Term in argument of constituent :math:`L_{2}`")
+      .def_property_readonly(
+          "nuprim", &AstronomicAngle::nuprim,
+          "Term in argument of lunisolar constituent :math:`K_{1}`")
+      .def_property_readonly(
+          "nusec", &AstronomicAngle::nusec,
+          "Term in argument of lunisolar constituent :math:`K_{2}`");
+
+  py::class_<Wave, std::shared_ptr<Wave>> wave(m, "Wave", "Wave definition");
   py::enum_<Wave::Ident>(wave, "Ident")
-      .value("kMm", Wave::kMm)
-      .value("kMf", Wave::kMf)
-      .value("kMtm", Wave::kMtm)
-      .value("kMsqm", Wave::kMsqm)
-      .value("k2Q1", Wave::k2Q1)
-      .value("kSigma1", Wave::kSigma1)
-      .value("kQ1", Wave::kQ1)
-      .value("kRho1", Wave::kRho1)
-      .value("kO1", Wave::kO1)
-      .value("kMP1", Wave::kMP1)
-      .value("kM11", Wave::kM11)
-      .value("kM12", Wave::kM12)
-      .value("kM13", Wave::kM13)
-      .value("kChi1", Wave::kChi1)
-      .value("kPi1", Wave::kPi1)
-      .value("kP1", Wave::kP1)
-      .value("kS1", Wave::kS1)
-      .value("kK1", Wave::kK1)
-      .value("kPsi1", Wave::kPsi1)
-      .value("kPhi1", Wave::kPhi1)
-      .value("kTheta1", Wave::kTheta1)
-      .value("kJ1", Wave::kJ1)
-      .value("kOO1", Wave::kOO1)
-      .value("kMNS2", Wave::kMNS2)
-      .value("kEps2", Wave::kEps2)
-      .value("k2N2", Wave::k2N2)
-      .value("kMu2", Wave::kMu2)
-      .value("k2MS2", Wave::k2MS2)
-      .value("kN2", Wave::kN2)
-      .value("kNu2", Wave::kNu2)
-      .value("kM2", Wave::kM2)
-      .value("kMKS2", Wave::kMKS2)
-      .value("kLambda2", Wave::kLambda2)
-      .value("kL2", Wave::kL2)
-      .value("k2MN2", Wave::k2MN2)
-      .value("kT2", Wave::kT2)
-      .value("kS2", Wave::kS2)
-      .value("kR2", Wave::kR2)
-      .value("kK2", Wave::kK2)
-      .value("kMSN2", Wave::kMSN2)
-      .value("kEta2", Wave::kEta2)
-      .value("k2SM2", Wave::k2SM2)
-      .value("kMO3", Wave::kMO3)
-      .value("k2MK3", Wave::k2MK3)
-      .value("kM3", Wave::kM3)
-      .value("kMK3", Wave::kMK3)
-      .value("kN4", Wave::kN4)
-      .value("kMN4", Wave::kMN4)
-      .value("kM4", Wave::kM4)
-      .value("kSN4", Wave::kSN4)
-      .value("kMS4", Wave::kMS4)
-      .value("kMK4", Wave::kMK4)
-      .value("kS4", Wave::kS4)
-      .value("kSK4", Wave::kSK4)
-      .value("kR4", Wave::kR4)
-      .value("k2MN6", Wave::k2MN6)
-      .value("kM6", Wave::kM6)
-      .value("kMSN6", Wave::kMSN6)
-      .value("k2MS6", Wave::k2MS6)
-      .value("k2MK6", Wave::k2MK6)
-      .value("k2SM6", Wave::k2SM6)
-      .value("kMSK6", Wave::kMSK6)
-      .value("kS6", Wave::kS6)
-      .value("kM8", Wave::kM8)
-      .value("kMSf", Wave::kMSf)
-      .value("kSsa", Wave::kSsa)
-      .value("kSa", Wave::kSa);
+      .value("kMm", Wave::kMm, ":math:`Mm`")
+      .value("kMf", Wave::kMf, ":math:`Mf`")
+      .value("kMtm", Wave::kMtm, ":math:`Mtm`")
+      .value("kMsqm", Wave::kMsqm, ":math:`Msqm`")
+      .value("k2Q1", Wave::k2Q1, ":math:`2Q_{1}`")
+      .value("kSigma1", Wave::kSigma1, ":math:`\\sigma_{1}`")
+      .value("kQ1", Wave::kQ1, ":math:`Q_{1}`")
+      .value("kRho1", Wave::kRho1, ":math:`\\rho_{1}`")
+      .value("kO1", Wave::kO1, ":math:`O_{1}`")
+      .value("kMP1", Wave::kMP1, ":math:`MP_{1}`")
+      .value("kM11", Wave::kM11, ":math:`M_{11}`")
+      .value("kM12", Wave::kM12, ":math:`M_{12}`")
+      .value("kM13", Wave::kM13, ":math:`M_{13}`")
+      .value("kChi1", Wave::kChi1, ":math:`\\chi_{1}`")
+      .value("kPi1", Wave::kPi1, ":math:`\\pi_{1}`")
+      .value("kP1", Wave::kP1, ":math:`P_{1}`")
+      .value("kS1", Wave::kS1, ":math:`S_{1}`")
+      .value("kK1", Wave::kK1, ":math:`K_{1}`")
+      .value("kPsi1", Wave::kPsi1, ":math:`\\psi_{1}`")
+      .value("kPhi1", Wave::kPhi1, ":math:`\\varphi_{1}`")
+      .value("kTheta1", Wave::kTheta1, ":math:`\\theta_{1}`")
+      .value("kJ1", Wave::kJ1, ":math:`J_{1}`")
+      .value("kOO1", Wave::kOO1, ":math:`OO_{1}`")
+      .value("kMNS2", Wave::kMNS2, ":math:`MNS_{2}`")
+      .value("kEps2", Wave::kEps2, ":math:`\\varepsilon_{2}`")
+      .value("k2N2", Wave::k2N2, ":math:`2N_{2}`")
+      .value("kMu2", Wave::kMu2, ":math:`\\upsilon_{2}`")
+      .value("k2MS2", Wave::k2MS2, ":math:`2MS_{2}`")
+      .value("kN2", Wave::kN2, ":math:`N_{2}`")
+      .value("kNu2", Wave::kNu2, ":math:`\\nu_{2}`")
+      .value("kM2", Wave::kM2, ":math:`M_{2}`")
+      .value("kMKS2", Wave::kMKS2, ":math:`MKS_{2}`")
+      .value("kLambda2", Wave::kLambda2, ":math:`\\lambda_{2}`")
+      .value("kL2", Wave::kL2, ":math:`L_{2}`")
+      .value("k2MN2", Wave::k2MN2, ":math:`2MN_{2}`")
+      .value("kT2", Wave::kT2, ":math:`T_{2}`")
+      .value("kS2", Wave::kS2, ":math:`S_{2}`")
+      .value("kR2", Wave::kR2, ":math:`R_{2}`")
+      .value("kK2", Wave::kK2, ":math:`K_{2}`")
+      .value("kMSN2", Wave::kMSN2, ":math:`MSN_{2}`")
+      .value("kEta2", Wave::kEta2, ":math:`\\eta_{2}`")
+      .value("k2SM2", Wave::k2SM2, ":math:`2SM_{2}`")
+      .value("kMO3", Wave::kMO3, ":math:`MO_{3}`")
+      .value("k2MK3", Wave::k2MK3, ":math:`2MK_{3}`")
+      .value("kM3", Wave::kM3, ":math:`M_{3}`")
+      .value("kMK3", Wave::kMK3, ":math:`MK_{3}`")
+      .value("kN4", Wave::kN4, ":math:`N_{4}`")
+      .value("kMN4", Wave::kMN4, ":math:`MN_{4}`")
+      .value("kM4", Wave::kM4, ":math:`M_{4}`")
+      .value("kSN4", Wave::kSN4, ":math:`SN_{4}`")
+      .value("kMS4", Wave::kMS4, ":math:`MS_{4}`")
+      .value("kMK4", Wave::kMK4, ":math:`MK_{4}`")
+      .value("kS4", Wave::kS4, ":math:`S_{4}`")
+      .value("kSK4", Wave::kSK4, ":math:`SK_{4}`")
+      .value("kR4", Wave::kR4, ":math:`R_{4}`")
+      .value("k2MN6", Wave::k2MN6, ":math:`2MN_{6}`")
+      .value("kM6", Wave::kM6, ":math:`M_{6}`")
+      .value("kMSN6", Wave::kMSN6, ":math:`MSN_{6}`")
+      .value("k2MS6", Wave::k2MS6, ":math:`2MS_{6}`")
+      .value("k2MK6", Wave::k2MK6, ":math:`2MK_{6}`")
+      .value("k2SM6", Wave::k2SM6, ":math:`2SM_{6}`")
+      .value("kMSK6", Wave::kMSK6, ":math:`MSK_{6}`")
+      .value("kS6", Wave::kS6, ":math:`S_{6}`")
+      .value("kM8", Wave::kM8, ":math:`M_{8}`")
+      .value("kMSf", Wave::kMSf, ":math:`MSf`")
+      .value("kSsa", Wave::kSsa, ":math:`Ssa`")
+      .value("kSa", Wave::kSa, ":math:`Sa`");
 
-  py::enum_<Wave::TidalType>(wave, "TidalType")
-      .value("kLongPeriod", Wave::kLongPeriod)
-      .value("kShortPeriod", Wave::kShortPeriod);
+  py::enum_<Wave::TidalType>(wave, "TidalType", "Possible type of tidal wave")
+      .value("kLongPeriod", Wave::kLongPeriod, "Long period tidal waves")
+      .value("kShortPeriod", Wave::kShortPeriod, "Short period tidal waves");
 
-  wave.def_property_readonly("ident", &Wave::ident)
-      .def_property_readonly("freq", &Wave::freq)
-      .def_property_readonly("type", &Wave::type)
-      .def_property_readonly("f", &Wave::f)
-      .def_property_readonly("u", &Wave::u)
-      .def("nodal_a", &Wave::nodal_a, py::arg("a"))
-      .def("nodal_g", &Wave::nodal_g, py::arg("a"))
-      .def("v0u", &Wave::v0u)
-      .def("v0", &Wave::v0)
-      .def("name", &Wave::name);
+  wave.def_property_readonly("ident", &Wave::ident, R"__doc__(
+Gets the wave ident
+)__doc__")
+      .def_property_readonly("freq", &Wave::freq, R"__doc__(
+Gets the wave frequency (radians per seconds)
+)__doc__")
+      .def_property_readonly("type", &Wave::type, R"__doc__(
+Gets the wave type
+)__doc__")
+      .def_property_readonly("f", &Wave::f, R"__doc__(
+Gets the nodal correction for amplitude
+)__doc__")
+      .def_property_readonly("u", &Wave::u, R"__doc__(
+Gets the nodal correction for phase
+)__doc__")
+      .def("nodal_a", &Wave::nodal_a, py::arg("a"), R"__doc__(
+Compute nodal corrections from SCHUREMAN (1958).
 
-  py::class_<WaveTable>(m, "WaveTable")
+Args:
+  a (pytide.core.AstronomicAngle): Astronomic angle
+)__doc__")
+      .def("nodal_g", &Wave::nodal_g, py::arg("a"), R"__doc__(
+Compute nodal corrections from SCHUREMAN (1958).
+
+Args:
+  a (pytide.core.AstronomicAngle): Astronomic angle
+)__doc__")
+      .def("v0u", &Wave::v0u, R"__doc__(
+Gets :math:`v_{0}` (greenwich argument) + u (nodal correction for phase)
+)__doc__")
+      .def("v0", &Wave::v0, R"__doc__(
+Gets v0 (greenwich argument)
+)__doc__")
+      .def("name", &Wave::name, R"__doc__(
+Gets the wave name
+)__doc__");
+
+  py::class_<WaveTable>(m, "WaveTable", "Properties of tide waves computed")
       .def(py::init<std::vector<std::string>>(),
            py::arg("waves") = std::vector<std::string>{})
-      .def_static("known_constituents", &WaveTable::known_constituents)
+      .def_static("known_constituents", &WaveTable::known_constituents,
+                  "Gets the tidal waves known by this object")
       .def("compute_nodal_corrections",
            [](WaveTable& self, double epoch) -> AstronomicAngle {
              return self.compute_nodal_corrections(epoch);
            },
-           py::arg("epoch"))
+           py::arg("epoch"), R"__doc__(
+Compute nodal corrections.
+
+Args:
+  epoch (float): Desired UTC time expressed in number of seconds elapsed since
+    1970-01-01T00:00:00
+Returns:
+  pytide.core.AstronomicAngle: The astronomic angle, indicating the date on
+    which the tide is to be calculated.
+)__doc__")
       .def("compute_nodal_corrections",
            [](WaveTable& self, py::array_t<double>& epoch) -> py::tuple {
              if (epoch.ndim() != 1) {
@@ -198,15 +253,24 @@ PYBIND11_MODULE(core, m) {
              }
              return py::make_tuple(f, v0u);
            },
-           py::arg("epoch"))
+           py::arg("epoch"), R"__doc__(
+Compute nodal corrections.
+
+Args:
+  epoch (numpy.ndarray): Desired UTC time expressed in number of seconds elapsed since
+    1970-01-01T00:00:00
+Returns:
+  tuple: the nodal correction for amplitude, v0 (greenwich argument) + u (nodal correction
+    for phase)
+)__doc__")
       .def("wave",
            [](const WaveTable& self, const Wave::Ident ident)
                -> std::shared_ptr<Wave> { return self.wave(ident); },
-           py::arg("ident"))
+           py::arg("ident"), "Gets the wave properties")
       .def("wave",
            [](const WaveTable& self, const std::string& ident)
                -> std::shared_ptr<Wave> { return self.wave(ident); },
-           py::arg("ident"))
+           py::arg("ident"), "Gets the wave properties")
       .def("tide",
            [](WaveTable& self, py::array_t<double>& epoch,
               py::array_t<std::complex<double>>& wave) -> py::array_t<double> {
@@ -247,7 +311,8 @@ PYBIND11_MODULE(core, m) {
              }
              return result;
            },
-           py::arg("epoch"), py::arg("wave"))
+           py::arg("epoch"), py::arg("wave"),
+           "Calculates the tide for the provided time series")
       .def_static(
           "harmonic_analysis",
           [](const Eigen::Ref<const Eigen::VectorXd>& h,
@@ -256,7 +321,7 @@ PYBIND11_MODULE(core, m) {
             py::gil_scoped_release release;
             return WaveTable::harmonic_analysis(h, f, v0u);
           },
-          py::arg("h"), py::arg("f"), py::arg("v0u"))
+          py::arg("h"), py::arg("f"), py::arg("v0u"), "Harmonic analysis")
       .def("__len__", [](const WaveTable& self) { return self.size(); })
       .def("__getitem__",
            [](const WaveTable& self, size_t index) -> std::shared_ptr<Wave> {
