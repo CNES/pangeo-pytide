@@ -105,3 +105,6 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# The file describing the version must not be committed in GIT.
+src/pytide/version.py
