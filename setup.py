@@ -1,12 +1,98 @@
+import datetime
 import distutils.command.build
+import os
 import pathlib
 import platform
+import re
 import setuptools
 import setuptools.command.build_ext
 import setuptools.command.install
-import os
+import subprocess
 import sys
 import sysconfig
+
+# Check Python requirement
+MAJOR = sys.version_info[0]
+MINOR = sys.version_info[1]
+if not (MAJOR >= 3 and MINOR >= 6):
+    raise RuntimeError("Python %d.%d is not supported, "
+                       "you need at least Python 3.6." % (MAJOR, MINOR))
+
+
+def execute(cmd):
+    """Executes a command and returns the lines displayed on the standard
+    output"""
+    process = subprocess.Popen(cmd,
+                               shell=True,
+                               stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE)
+    return process.stdout.read().decode()
+
+
+def revision():
+    """Returns the software version"""
+    cwd = pathlib.Path().absolute()
+    module = os.path.join(cwd, 'src', 'pytide', 'version.py')
+    stdout = execute("git describe --tags --dirty --long --always").strip()
+    pattern = re.compile(r'([\w\d\.]+)-(\d+)-g([\w\d]+)(?:-(dirty))?')
+    match = pattern.search(stdout)
+
+    # If the information is unavailable (execution of this function outside the
+    # development environment), file creation is not possible
+    if not stdout:
+        pattern = re.compile(r'\s+result = "(.*)"')
+        with open(module, "r") as stream:
+            for line in stream:
+                match = pattern.search(line)
+                if match:
+                    return match.group(1)
+        raise AssertionError()
+
+    # TODO: Delete this test which will be useless after the creation of the
+    # first tag
+    if match is None:
+        pattern = re.compile(r'([\w\d]+)(?:-(dirty))?')
+        match = pattern.search(stdout)
+        version = "0.1"
+        sha1 = match.group(1)
+    else:
+        version = match.group(1)
+        sha1 = match.group(3)
+
+    stdout = execute("git log  %s -1 --format='%%H %%at'" % sha1)
+    stdout = stdout.strip().split()
+    date = datetime.datetime.fromtimestamp(int(stdout[1]))
+    sha1 = stdout[0]
+
+    # Updating the version number description in "meta.yaml"
+    meta = os.path.join(cwd, 'conda', 'meta.yaml')
+    with open(meta, "r") as stream:
+        lines = stream.readlines()
+    pattern = re.compile(r'\s+version:\s+(.*)')
+    for idx, line in enumerate(lines):
+        match = pattern.search(line)
+        if match is not None:
+            lines[idx] = '  version: %s\n' % version
+    with open(meta, "w") as stream:
+        stream.write("".join(lines))
+
+    # Finally, write the file containing the version number.
+    with open(module, 'w') as handler:
+        handler.write('''"""
+Get software version information
+================================
+"""
+
+
+def release(full: bool = False) -> str:
+    """Returns the software version number"""
+    # {sha1}
+    result = "{version}"
+    if full:
+        result += " ({date})"
+    return result
+'''.format(sha1=sha1, version=version, date=date.strftime("%d %B %Y")))
+    return version
 
 
 class CMakeExtension(setuptools.Extension):
@@ -128,7 +214,7 @@ class Build(distutils.command.build.build):
 
 def main():
     setuptools.setup(name='pytide',
-                     version='0.1',
+                     version=revision(),
                      classifiers=[
                          "Development Status :: 3 - Alpha",
                          "Topic :: Scientific/Engineering :: Physics",
