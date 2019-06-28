@@ -54,6 +54,11 @@ PYBIND11_MODULE(core, m) {
     PyDateTime_IMPORT;
   }
 
+  m.doc() = R"__doc__(
+Core module
+-----------
+)__doc__";
+
   m.def("timestamp",
         [](py::handle datetime) -> double { return timestamp(datetime); },
         py::arg("date"), "Return POSIX timestamp as float");
