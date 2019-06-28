@@ -304,9 +304,9 @@ WaveTable::WaveTable(const std::vector<std::string>& waves) {
 }
 
 void Wave::nodal_g(const AstronomicAngle& a) {
-  v0_ = argument_[0] * a.t() + argument_[1] * a.s() + argument_[2] * a.h() +
-        argument_[3] * a.p() + argument_[5] * a.p1() +
-        argument_[6] * pi_2<double>();
+  v_ = argument_[0] * a.t() + argument_[1] * a.s() + argument_[2] * a.h() +
+       argument_[3] * a.p() + argument_[5] * a.p1() +
+       argument_[6] * pi_2<double>();
   u_ = argument_[7] * a.xi() + argument_[8] * a.nu() +
        argument_[9] * a.nuprim() + argument_[10] * a.nusec();
 }
@@ -314,17 +314,17 @@ void Wave::nodal_g(const AstronomicAngle& a) {
 Eigen::VectorXcd WaveTable::harmonic_analysis(
     const Eigen::Ref<const Eigen::VectorXd>& h,
     const Eigen::Ref<const Eigen::MatrixXd>& f,
-    const Eigen::Ref<const Eigen::MatrixXd>& v0u) {
-  if (f.rows() != v0u.rows() || f.cols() != v0u.cols()) {
+    const Eigen::Ref<const Eigen::MatrixXd>& vu) {
+  if (f.rows() != vu.rows() || f.cols() != vu.cols()) {
     throw std::invalid_argument(
-        "f and v0u could not be broadcast together with shape (" +
+        "f and vu could not be broadcast together with shape (" +
         std::to_string(f.rows()) + ", " + std::to_string(f.cols()) + ") (" +
-        std::to_string(v0u.rows()) + ", " + std::to_string(v0u.cols()) + ")");
+        std::to_string(vu.rows()) + ", " + std::to_string(vu.cols()) + ")");
   }
 
-  if (h.rows() != f.cols() || h.rows() != v0u.cols()) {
+  if (h.rows() != f.cols() || h.rows() != vu.cols()) {
     throw std::invalid_argument(
-        "f, v0u could not be broadcast with h with shape (" +
+        "f, vu could not be broadcast with h with shape (" +
         std::to_string(f.rows()) + ", " + std::to_string(f.cols()) + ") (" +
         std::to_string(h.cols()) + ")");
   }
@@ -339,8 +339,8 @@ Eigen::VectorXcd WaveTable::harmonic_analysis(
 
   auto H = Eigen::MatrixXd(w_size << 1, h.rows());
 
-  H.topRows(w_size) = f.array() * v0u.array().cos();
-  H.bottomRows(w_size) = f.array() * v0u.array().sin();
+  H.topRows(w_size) = f.array() * vu.array().cos();
+  H.bottomRows(w_size) = f.array() * vu.array().sin();
 
   auto solution = ((H * H.transpose()).inverse() * H) * h;
   result.real() = solution.topRows(w_size);

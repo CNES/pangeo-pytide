@@ -195,11 +195,11 @@ Compute nodal corrections from SCHUREMAN (1958).
 Args:
   a (pytide.core.AstronomicAngle): Astronomic angle
 )__doc__")
-      .def("v0u", &Wave::v0u, R"__doc__(
-Gets :math:`v_{0}` (greenwich argument) + u (nodal correction for phase)
+      .def("vu", &Wave::vu, R"__doc__(
+Gets :math:`v` (greenwich argument) + :math:`u` (nodal correction for phase)
 )__doc__")
-      .def("v0", &Wave::v0, R"__doc__(
-Gets v0 (greenwich argument)
+      .def("v", &Wave::v, R"__doc__(
+Gets :math:`v` (greenwich argument)
 )__doc__")
       .def("name", &Wave::name, R"__doc__(
 Gets the wave name
@@ -233,35 +233,35 @@ Returns:
              py::ssize_t size = self.size();
              py::array_t<double, py::array::c_style> f(
                  py::array::ShapeContainer{epoch.size(), size});
-             py::array_t<double, py::array::c_style> v0u(
+             py::array_t<double, py::array::c_style> vu(
                  py::array::ShapeContainer{epoch.size(), size});
              {
                py::gil_scoped_release release;
 
                auto _epoch = epoch.mutable_unchecked<1>();
                auto _f = f.mutable_unchecked<2>();
-               auto _v0u = v0u.mutable_unchecked<2>();
+               auto _vu = vu.mutable_unchecked<2>();
 
                for (py::ssize_t ix = 0; ix < epoch.shape(0); ++ix) {
                  self.compute_nodal_corrections(_epoch(ix));
 
                  for (std::size_t jx = 0; jx < self.size(); ++jx) {
                    _f(ix, jx) = self[jx]->f();
-                   _v0u(ix, jx) = self[jx]->v0u();
+                   _vu(ix, jx) = self[jx]->vu();
                  }
                }
              }
-             return py::make_tuple(f, v0u);
+             return py::make_tuple(f, vu);
            },
            py::arg("epoch"), R"__doc__(
 Compute nodal corrections.
 
 Args:
-  epoch (numpy.ndarray): Desired UTC time expressed in number of seconds elapsed since
-    1970-01-01T00:00:00
+  epoch (numpy.ndarray): Desired UTC time expressed in number of seconds
+    elapsed since 1970-01-01T00:00:00
 Returns:
-  tuple: the nodal correction for amplitude, v0 (greenwich argument) + u (nodal correction
-    for phase)
+  tuple: the nodal correction for amplitude, v (greenwich argument) + u
+  (nodal correction for phase)
 )__doc__")
       .def("wave",
            [](const WaveTable& self, const Wave::Ident ident)
@@ -302,7 +302,7 @@ Returns:
 
                  for (size_t jx = 0; jx < self.size(); ++jx) {
                    const auto& item = self[jx];
-                   double phi = item->v0u();
+                   double phi = item->vu();
                    tide += item->f() * (_wave(jx).real() * std::cos(phi) +
                                         _wave(jx).imag() * std::sin(phi));
                  }
@@ -317,11 +317,25 @@ Returns:
           "harmonic_analysis",
           [](const Eigen::Ref<const Eigen::VectorXd>& h,
              const Eigen::Ref<const Eigen::MatrixXd>& f,
-             const Eigen::Ref<const Eigen::MatrixXd>& v0u) -> Eigen::VectorXcd {
+             const Eigen::Ref<const Eigen::MatrixXd>& vu) -> Eigen::VectorXcd {
             py::gil_scoped_release release;
-            return WaveTable::harmonic_analysis(h, f, v0u);
+            return WaveTable::harmonic_analysis(h, f, vu);
           },
-          py::arg("h"), py::arg("f"), py::arg("v0u"), "Harmonic analysis")
+          py::arg("h"), py::arg("f"), py::arg("vu"), R"__doc__(
+Harmonic Analysis
+
+Args:
+  h (numpy.ndarray): Sea level.
+  f (numpy.ndarray): Nodal correction coefficient applied to the amplitude of
+    the constituents analyzed.
+  vu (numpy.ndarray): Astronomical argument at time :math:`t` + the nodal
+    correction coefficient applied to the phase of the constituents
+    analyzed
+
+Returns:
+  numpy.ndarray: The complex number representing the different reconstructed
+  waves.
+)__doc__")
       .def("__len__", [](const WaveTable& self) { return self.size(); })
       .def("__getitem__",
            [](const WaveTable& self, size_t index) -> std::shared_ptr<Wave> {
