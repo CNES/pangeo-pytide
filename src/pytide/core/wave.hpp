@@ -110,7 +110,7 @@ class Wave : public std::enable_shared_from_this<Wave> {
   double freq_;
 
   /// greenwich argument
-  double v0_{std::numeric_limits<double>::quiet_NaN()};
+  double v_{std::numeric_limits<double>::quiet_NaN()};
 
   /// Nodal correction for amplitude.
   double f_{std::numeric_limits<double>::quiet_NaN()};
@@ -211,11 +211,11 @@ class Wave : public std::enable_shared_from_this<Wave> {
   /// Gets the wave type
   constexpr TidalType type() const noexcept { return type_; }
 
-  /// Gets v0 (greenwich argument) + u (nodal correction for phase)
-  double v0u() const noexcept { return std::fmod(v0_ + u_, two_pi<double>()); }
+  /// Gets v (greenwich argument) + u (nodal correction for phase)
+  double vu() const noexcept { return std::fmod(v_ + u_, two_pi<double>()); }
 
   /// Gets v0 (greenwich argument)
-  double v0() const noexcept { return v0_; }
+  double v() const noexcept { return v_; }
 
   /// Gets the nodal correction for amplitude
   constexpr double f() const noexcept { return f_; }
@@ -1168,5 +1168,5 @@ class WaveTable {
   static Eigen::VectorXcd harmonic_analysis(
       const Eigen::Ref<const Eigen::VectorXd>& h,
       const Eigen::Ref<const Eigen::MatrixXd>& f,
-      const Eigen::Ref<const Eigen::MatrixXd>& v0u);
+      const Eigen::Ref<const Eigen::MatrixXd>& vu);
 };
