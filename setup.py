@@ -233,7 +233,7 @@ def main():
                      ext_modules=[CMakeExtension(name="pytide.core")],
                      setup_requires=[],
                      install_requires=["numpy"],
-                     test_requires=["netCDF4", "numpy"],
+                     tests_require=["netCDF4", "numpy"],
                      package_dir={'': 'src'},
                      packages=setuptools.find_packages(where="src"),
                      cmdclass={
