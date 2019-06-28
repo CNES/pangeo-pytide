@@ -232,6 +232,7 @@ def main():
                      license="BSD License",
                      ext_modules=[CMakeExtension(name="pytide.core")],
                      setup_requires=[],
+                     scripts=["src/scripts/mit_gcm_detiding.py"],
                      install_requires=["numpy"],
                      tests_require=["netCDF4", "numpy"],
                      package_dir={'': 'src'},
