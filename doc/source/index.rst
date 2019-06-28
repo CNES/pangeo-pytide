@@ -1,20 +1,30 @@
-.. pytide documentation master file, created by
-   sphinx-quickstart on Thu Jun 27 17:29:17 2019.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Welcome to pytide's documentation!
 ==================================
 
+INT_LR_XOverCAL - Software User Manual
+======================================
+
+.. only: not latex
+
+    Contents:
+
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :maxdepth: 1
 
+   about
+   changelog
 
+.. toctree::
+   :caption: The Basics
+   :maxdepth: 1
 
-Indices and tables
-==================
+   setup
+   conda
+   tutorial
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+.. toctree::
+   :caption: API Documentation
+   :maxdepth: 1
+
+   module
+

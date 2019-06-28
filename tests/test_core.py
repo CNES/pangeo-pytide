@@ -70,9 +70,9 @@ class WaveTable(unittest.TestCase):
             h = dataset['ocean'][:] * 1e-2
 
         wt = core.WaveTable()
-        f, v0u = wt.compute_nodal_corrections(time)
-        f, v0u = f.T, v0u.T
-        w = wt.harmonic_analysis(h, f, v0u)
+        f, vu = wt.compute_nodal_corrections(time)
+        f, vu = f.T, vu.T
+        w = wt.harmonic_analysis(h, f, vu)
         delta = h - wt.tide(time, w)
 
         self.assertAlmostEqual(delta.mean(), 0, delta=1e-16)
