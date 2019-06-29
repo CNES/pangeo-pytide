@@ -65,12 +65,12 @@ class WaveTable(core.WaveTable):
         constituents in the Darwin development, completed by Shureman in 1958,
         and many non-linear waves. The definition of tidal constants and
         astronomical arguments is taken from FES2014 tidal prediction software
-        (lien bitbucket ) and a complete definition of waves is also available
-        in Shureman (1958). This spectrum is the most commonly used for
-        harmonic analysis due the simplification given by the nodal correction
-        concept (:math:`f` and :math:`u` coefficients above) which allows
-        dealing with slow motions of the lunar ascending node and reducing the
-        number of constituents in the tidal spectrum.
+        and a complete definition of waves is also available in Shureman (1958).
+        This spectrum is the most commonly used for harmonic analysis due the
+        simplification given by the nodal correction concept (:math:`f` and
+        :math:`u` coefficients above) which allows dealing with slow motions of
+        the lunar ascending node and reducing the number of constituents in the
+        tidal spectrum.
 
         More details about this harmonic analysis method can be found in
         Ponchaut et al. 1999.
