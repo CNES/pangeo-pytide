@@ -64,7 +64,7 @@ def revision():
         version = match.group(1)
         sha1 = match.group(3)
 
-    stdout = execute("git log  %s -1 --format='%%H %%at'" % sha1)
+    stdout = execute("git log  %s -1 --format=\"%%H %%at\"" % sha1)
     stdout = stdout.strip().split()
     date = datetime.datetime.fromtimestamp(int(stdout[1]))
     sha1 = stdout[0]
