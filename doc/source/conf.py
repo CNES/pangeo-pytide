@@ -5,7 +5,7 @@
 # http://www.sphinx-doc.org/en/master/config
 
 # -- Path setup --------------------------------------------------------------
-
+import os
 import pytide.version
 
 # -- Project information -----------------------------------------------------
@@ -38,10 +38,16 @@ exclude_patterns = []
 
 # -- Options for HTML output -------------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-#
-html_theme = 'alabaster'
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+if on_rtd:
+    html_context = {
+        'css_files': [
+            '//media.readthedocs.org/css/sphinx_rtd_theme.css',
+            '//media.readthedocs.org/css/readthedocs-doc-embed.css',
+        ]
+    }
+else:
+    html_theme = 'alabaster'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
