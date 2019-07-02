@@ -1,6 +1,7 @@
 ![conda](https://anaconda.org/fbriol/pytide/badges/installer/conda.svg)
 ![platforms](https://anaconda.org/fbriol/pytide/badges/platforms.svg)
 ![latest-release-date](https://anaconda.org/fbriol/pytide/badges/latest_release_date.svg)
+![license](https://anaconda.org/fbriol/pytide/badges/license.svg)
 
 # pangeo-pytide
 
