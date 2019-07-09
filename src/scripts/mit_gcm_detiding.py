@@ -1,7 +1,3 @@
-# Copyright (c) 2019 CNES
-#
-# All rights reserved. Use of this source code is governed by a
-# BSD-style license that can be found in the LICENSE file.
 import argparse
 import collections
 import datetime
@@ -28,8 +24,8 @@ UNITS = [('octets', 0), ('ko', 0), ('Mo', 1), ('Go', 2), ('To', 2), ('Po', 2)]
 
 # Definition of the calculation period of the analysis (the spin-up period is
 # not included).
-START_DATE = numpy.datetime64('2011-11-13')
-END_DATE = numpy.datetime64('2012-11-12')
+START_DATE = '2011-11-13'
+END_DATE = '2012-11-12'
 
 
 def t_axis(dirname):
@@ -235,6 +231,14 @@ def valid_slice(s):
         raise argparse.ArgumentTypeError("invalid slice value:" + s)
 
 
+def valid_date(s):
+    try:
+        date = datetime.datetime.strptime("%Y-%m-%dT%H:%M:%S")
+        return numpy.datetime64(date)
+    except ValueError:
+        raise argparse.ArgumentTypeError("invalid date value:" + s)
+
+
 def usage():
     parser = argparse.ArgumentParser(
         description="Harmonic analysis for MIT/GCM")
@@ -264,6 +268,18 @@ def usage():
                         nargs=3,
                         type=valid_slice,
                         default=None)
+    parser.add_argument("--start_date",
+                        help="Start date to process",
+                        metavar='DATE',
+                        nargs=1,
+                        type=valid_date,
+                        default=START_DATE)
+    parser.add_argument("--end_date",
+                        help="End date to process",
+                        metavar='DATE',
+                        nargs=1,
+                        type=valid_date,
+                        default=END_DATE)
     parser.add_argument("--var_chunk",
                         help="Slice of the variable to process",
                         metavar='INT',
@@ -279,7 +295,7 @@ def usage():
                         help="Use a dask local cluster for testing purpose",
                         action="store_true")
     consitutents = pytide.WaveTable.known_constituents()
-    parser.add_argument("--pytide",
+    parser.add_argument("--tidal_constituents",
                         help="List of tidal waves to be studied. "
                         "Choose from the following consitutents: " +
                         ", ".join(consitutents),
@@ -333,12 +349,12 @@ def main():
     # Reading the list of files and associated dates to
     # be processed.
     time_series = t_axis(args.dirname)
-    period = (time_series >= START_DATE) & (time_series <= END_DATE)
+    period = (time_series >= args.start_date) & (time_series <= args.end_date)
     logging.info("number of files to process %d", len(time_series[period]))
     logging.info("period [%s, %s]", time_series[period].min(),
                  time_series[period].max())
 
-    wave_table = pytide.WaveTable(args.pytide)
+    wave_table = pytide.WaveTable(args.tidal_constituents)
     logging.info("%d tidal constituents to be analysed", len(wave_table))
 
     f, v0u = compute_nodal_corrections(client, wave_table, time_series[period])
