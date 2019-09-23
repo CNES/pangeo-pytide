@@ -53,6 +53,70 @@ double timestamp(py::handle datetime) {
       std::string(py::str(datetime.get_type().attr("__name__"))) + ")");
 }
 
+/// Calculates the tide of a given time series.
+static py::array_t<double> tide_from_time_series(
+    WaveTable& self, const Eigen::Ref<const Eigen::VectorXd>& epoch,
+    const Eigen::Ref<const Eigen::VectorXcd>& wave) {
+  if (static_cast<size_t>(wave.rows()) != self.size()) {
+    throw std::invalid_argument(
+        "wave must contain as many items as tidal constituents loaded");
+  }
+
+  py::array_t<double, py::array::c_style> result(
+      py::array::ShapeContainer{epoch.rows()});
+  auto _result = result.mutable_unchecked<1>();
+  {
+    py::gil_scoped_release release;
+
+    for (py::ssize_t ix = 0; ix < epoch.rows(); ++ix) {
+      double tide = 0;
+      self.compute_nodal_corrections(epoch(ix));
+
+      for (size_t jx = 0; jx < self.size(); ++jx) {
+        const auto& item = self[jx];
+        double phi = item->vu();
+
+        tide += item->f() * (wave(jx).real() * std::cos(phi) +
+                             wave(jx).imag() * std::sin(phi));
+      }
+      _result(ix) = tide;
+    }
+  }
+  return result;
+}
+
+/// Calculates the tide for a given date from a grid describing the properties
+/// of tidal waves over an area of interest.
+static py::array_t<double> tide_from_mapping(
+    WaveTable& self, const double epoch,
+    const Eigen::Ref<const Eigen::MatrixXcd>& wave) {
+  if (static_cast<size_t>(wave.rows()) != self.size()) {
+    throw std::invalid_argument(
+        "the first dimension of wave must contain as many items as "
+        "tidal constituents loaded");
+  }
+  self.compute_nodal_corrections(epoch);
+  py::array_t<double, py::array::c_style> result(
+      py::array::ShapeContainer{wave.cols()});
+  auto _result = result.mutable_unchecked<1>();
+  {
+    py::gil_scoped_release release;
+
+    for (py::ssize_t ix = 0; ix < wave.cols(); ++ix) {
+      double tide = 0;
+      for (size_t jx = 0; jx < self.size(); ++jx) {
+        const auto& item = self[jx];
+        double phi = item->vu();
+
+        tide += item->f() * (wave(jx, ix).real() * std::cos(phi) +
+                             wave(jx, ix).imag() * std::sin(phi));
+      }
+      _result(ix) = tide;
+    }
+  }
+  return result;
+}
+
 PYBIND11_MODULE(core, m) {
   if (!PyDateTimeAPI) {
     PyDateTime_IMPORT;
@@ -63,9 +127,10 @@ Core module
 -----------
 )__doc__";
 
-  m.def("timestamp",
-        [](py::handle datetime) -> double { return timestamp(datetime); },
-        py::arg("date"), "Return POSIX timestamp as float");
+  m.def(
+      "timestamp",
+      [](py::handle datetime) -> double { return timestamp(datetime); },
+      py::arg("date"), "Return POSIX timestamp as float");
 
   py::class_<AstronomicAngle>(m, "AstronomicAngle")
       .def(py::init<>())
@@ -219,11 +284,12 @@ Gets the wave name
            py::arg("waves") = std::vector<std::string>{})
       .def_static("known_constituents", &WaveTable::known_constituents,
                   "Gets the tidal waves known by this object")
-      .def("compute_nodal_corrections",
-           [](WaveTable& self, double epoch) -> AstronomicAngle {
-             return self.compute_nodal_corrections(epoch);
-           },
-           py::arg("epoch"), R"__doc__(
+      .def(
+          "compute_nodal_corrections",
+          [](WaveTable& self, double epoch) -> AstronomicAngle {
+            return self.compute_nodal_corrections(epoch);
+          },
+          py::arg("epoch"), R"__doc__(
 Compute nodal corrections.
 
 Args:
@@ -233,36 +299,37 @@ Returns:
   pytide.core.AstronomicAngle: The astronomic angle, indicating the date on
     which the tide is to be calculated.
 )__doc__")
-      .def("compute_nodal_corrections",
-           [](WaveTable& self, py::array_t<double>& epoch) -> py::tuple {
-             if (epoch.ndim() != 1) {
-               throw std::invalid_argument(
-                   "epoch must be a one-dimensional array");
-             }
-             py::ssize_t size = self.size();
-             py::array_t<double, py::array::c_style> f(
-                 py::array::ShapeContainer{epoch.size(), size});
-             py::array_t<double, py::array::c_style> vu(
-                 py::array::ShapeContainer{epoch.size(), size});
-             {
-               py::gil_scoped_release release;
+      .def(
+          "compute_nodal_corrections",
+          [](WaveTable& self, py::array_t<double>& epoch) -> py::tuple {
+            if (epoch.ndim() != 1) {
+              throw std::invalid_argument(
+                  "epoch must be a one-dimensional array");
+            }
+            py::ssize_t size = self.size();
+            py::array_t<double, py::array::c_style> f(
+                py::array::ShapeContainer{epoch.size(), size});
+            py::array_t<double, py::array::c_style> vu(
+                py::array::ShapeContainer{epoch.size(), size});
+            {
+              py::gil_scoped_release release;
 
-               auto _epoch = epoch.mutable_unchecked<1>();
-               auto _f = f.mutable_unchecked<2>();
-               auto _vu = vu.mutable_unchecked<2>();
+              auto _epoch = epoch.mutable_unchecked<1>();
+              auto _f = f.mutable_unchecked<2>();
+              auto _vu = vu.mutable_unchecked<2>();
 
-               for (py::ssize_t ix = 0; ix < epoch.shape(0); ++ix) {
-                 self.compute_nodal_corrections(_epoch(ix));
+              for (py::ssize_t ix = 0; ix < epoch.shape(0); ++ix) {
+                self.compute_nodal_corrections(_epoch(ix));
 
-                 for (std::size_t jx = 0; jx < self.size(); ++jx) {
-                   _f(ix, jx) = self[jx]->f();
-                   _vu(ix, jx) = self[jx]->vu();
-                 }
-               }
-             }
-             return py::make_tuple(f, vu);
-           },
-           py::arg("epoch"), R"__doc__(
+                for (std::size_t jx = 0; jx < self.size(); ++jx) {
+                  _f(ix, jx) = self[jx]->f();
+                  _vu(ix, jx) = self[jx]->vu();
+                }
+              }
+            }
+            return py::make_tuple(f, vu);
+          },
+          py::arg("epoch"), R"__doc__(
 Compute nodal corrections.
 
 Args:
@@ -272,56 +339,52 @@ Returns:
   tuple: the nodal correction for amplitude, v (greenwich argument) + u
   (nodal correction for phase)
 )__doc__")
-      .def("wave",
-           [](const WaveTable& self, const Wave::Ident ident)
-               -> std::shared_ptr<Wave> { return self.wave(ident); },
-           py::arg("ident"), "Gets the wave properties")
-      .def("wave",
-           [](const WaveTable& self, const std::string& ident)
-               -> std::shared_ptr<Wave> { return self.wave(ident); },
-           py::arg("ident"), "Gets the wave properties")
-      .def("tide",
-           [](WaveTable& self, py::array_t<double>& epoch,
-              py::array_t<std::complex<double>>& wave) -> py::array_t<double> {
-             if (epoch.ndim() != 1) {
-               throw std::invalid_argument(
-                   "epoch must be a one-dimensional array");
-             }
-             if (wave.ndim() != 1) {
-               throw std::invalid_argument(
-                   "wave must be a one-dimensional array");
-             }
-             if (static_cast<size_t>(wave.shape(0)) != self.size()) {
-               throw std::invalid_argument(
-                   "wave must contain as many items as tidal constituents "
-                   "loaded");
-             }
-             py::array_t<double, py::array::c_style> result(
-                 py::array::ShapeContainer{epoch.size()});
-             {
-               py::gil_scoped_release release;
+      .def(
+          "wave",
+          [](const WaveTable& self, const Wave::Ident ident)
+              -> std::shared_ptr<Wave> { return self.wave(ident); },
+          py::arg("ident"), "Gets the wave properties")
+      .def(
+          "wave",
+          [](const WaveTable& self, const std::string& ident)
+              -> std::shared_ptr<Wave> { return self.wave(ident); },
+          py::arg("ident"), "Gets the wave properties")
+      .def(
+          "tide_from_tide_series",
+          [](WaveTable& self, const Eigen::Ref<const Eigen::VectorXd>& epoch,
+             const Eigen::Ref<const Eigen::VectorXcd>& wave)
+              -> py::array_t<double> {
+            return tide_from_time_series(self, epoch, wave);
+          },
+          py::arg("epoch"), py::arg("wave"), R"__doc__(
+Calculates the tide of a given time series.
 
-               auto _epoch = epoch.mutable_unchecked<1>();
-               auto _wave = wave.mutable_unchecked<1>();
-               auto _result = result.mutable_unchecked<1>();
+Args:
+  epoch (numpy.ndarray): Time series dates.
+  wave (numpy.ndarray): Tidal wave properties.
 
-               for (py::ssize_t ix = 0; ix < epoch.shape(0); ++ix) {
-                 self.compute_nodal_corrections(_epoch(ix));
-                 double tide = 0;
+Return:
+  numpy.ndarray:
+    The tide calculated for the time series provided.
+)__doc__")
+      .def(
+          "tide_from_mapping",
+          [](WaveTable& self, const double epoch,
+             const Eigen::Ref<const Eigen::MatrixXcd>& wave)
+              -> py::array_t<double> {
+            return tide_from_mapping(self, epoch, wave);
+          },
+          py::arg("epoch"), py::arg("wave"), R"__doc__(
+Calculates the tide for a given tidal wave mapping.
 
-                 for (size_t jx = 0; jx < self.size(); ++jx) {
-                   const auto& item = self[jx];
-                   double phi = item->vu();
-                   tide += item->f() * (_wave(jx).real() * std::cos(phi) +
-                                        _wave(jx).imag() * std::sin(phi));
-                 }
-                 _result(ix) = tide;
-               }
-             }
-             return result;
-           },
-           py::arg("epoch"), py::arg("wave"),
-           "Calculates the tide for the provided time series")
+Args:
+  epoch (float): Mapping date
+  wave (numpy.ndarray): Tidal wave mapping
+
+Return:
+  numpy.ndarray:
+    The tide calculated on the area of interest provided.
+)__doc__")
       .def_static(
           "harmonic_analysis",
           [](const Eigen::Ref<const Eigen::VectorXd>& h,
@@ -346,30 +409,33 @@ Returns:
   waves.
 )__doc__")
       .def("__len__", [](const WaveTable& self) { return self.size(); })
-      .def("__getitem__",
-           [](const WaveTable& self, size_t index) -> std::shared_ptr<Wave> {
-             return self[index];
-           },
-           py::arg("index"))
-      .def("__getitem__",
-           [](const WaveTable& self,
-              py::slice slice) -> std::vector<std::shared_ptr<Wave>> {
-             size_t start, stop, step, slicelength;
-             if (!slice.compute(self.size(), &start, &stop, &step,
-                                &slicelength)) {
-               throw py::error_already_set();
-             }
-             auto result = std::vector<std::shared_ptr<Wave>>(slicelength);
-             for (size_t ix = 0; ix < slicelength; ++ix) {
-               result[ix] = self[start];
-               start += step;
-             }
-             return result;
-           },
-           py::arg("slice"))
-      .def("__iter__",
-           [](const WaveTable& self) {
-             return py::make_iterator(self.begin(), self.end());
-           },
-           py::keep_alive<0, 1>());
+      .def(
+          "__getitem__",
+          [](const WaveTable& self, size_t index) -> std::shared_ptr<Wave> {
+            return self[index];
+          },
+          py::arg("index"))
+      .def(
+          "__getitem__",
+          [](const WaveTable& self,
+             py::slice slice) -> std::vector<std::shared_ptr<Wave>> {
+            size_t start, stop, step, slicelength;
+            if (!slice.compute(self.size(), &start, &stop, &step,
+                               &slicelength)) {
+              throw py::error_already_set();
+            }
+            auto result = std::vector<std::shared_ptr<Wave>>(slicelength);
+            for (size_t ix = 0; ix < slicelength; ++ix) {
+              result[ix] = self[start];
+              start += step;
+            }
+            return result;
+          },
+          py::arg("slice"))
+      .def(
+          "__iter__",
+          [](const WaveTable& self) {
+            return py::make_iterator(self.begin(), self.end());
+          },
+          py::keep_alive<0, 1>());
 }

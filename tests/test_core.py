@@ -77,7 +77,7 @@ class WaveTable(unittest.TestCase):
         f, vu = wt.compute_nodal_corrections(time)
         f, vu = f.T, vu.T
         w = wt.harmonic_analysis(h, f, vu)
-        delta = h - wt.tide(time, w)
+        delta = h - wt.tide_from_tide_series(time, w)
 
         self.assertAlmostEqual(delta.mean(), 0, delta=1e-16)
         self.assertAlmostEqual(delta.std(), 0, delta=1e-12)
