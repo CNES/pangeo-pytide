@@ -2,6 +2,7 @@ recursive-include docs *
 recursive-include src *
 recursive-include tests *
 recursive-include third_party *
+recursive-include cmake *
 include CMakeLists.txt
 include LICENSE
 include README.md
