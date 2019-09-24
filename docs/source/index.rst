@@ -1,9 +1,6 @@
 Welcome to pytide's documentation!
 ==================================
 
-INT_LR_XOverCAL - Software User Manual
-======================================
-
 .. only: not latex
 
     Contents:
