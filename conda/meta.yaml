@@ -1,23 +1,51 @@
+{% set name = "pytide" %}
+{% set version = "1.1.0" %}
+
 package:
-  name: pytide
-  version: 1.1.0
+  name: {{ name|lower }}
+  version: {{ version }}
 
 source:
-    git_url: https://github.com/CNES/pangeo-pytide.git
-    git_rev: HEAD
+  url: https://github.com/CNES/pangeo-{{ name }}/releases/download/{{ version }}/{{ name }}-{{ version }}.tar.gz
+  sha256: TODO
+
+build:
+  number: 0
+  skip: true  # [linux32 or win32 or py<37]
 
 requirements:
   build:
-    - {{ compiler('cxx') }}
+    - {{ compiler('cxx') }}  # [linux or osx]
+    - vs2017_win-64          # [win]
+    - cmake
   host:
     - eigen
     - numpy
-    - python {{ python }}
+    - python
     - setuptools
   run:
+    - {{ pin_compatible('numpy') }}
+    - python
     - numpy
-    - python {{ python }}
 
 test:
   imports:
     - pytide
+
+about:
+  home: https://github.com/CNES/pangeo-pytide
+  license: BSD
+  license_family: BSD
+  license_file: LICENSE
+  summary: 'Tidal constituents analysis in Python.'
+
+  description: |
+    pytide allows to analyze the tidal constituents of a time series
+    from a harmonic analysis. The definition of tidal constants and astronomical
+    arguments is taken from FES2014 tidal prediction software.
+  doc_url: https://pangeo-pytide.readthedocs.io/
+  dev_url: https://github.com/CNES/pangeo-pytide
+
+extra:
+  recipe-maintainers:
+    - fbriol
