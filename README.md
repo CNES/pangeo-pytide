@@ -31,7 +31,7 @@ for this software is detailed
 
 To install the software using conda simply execute the following command:
 
-    conda install pangeo-pytide -c fbriol
+    conda install pangeo-pytide -c conda-forge
 
 This command will install the software and the necessary dependencies. More
 information is available on the syntax of this command on the [related
