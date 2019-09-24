@@ -273,6 +273,7 @@ def main():
                          "Operating System :: POSIX",
                          "Operating System :: MacOS",
                          "Operating System :: Microsoft :: Windows",
+                         "Programming Language :: Python :: 3.6",
                          "Programming Language :: Python :: 3.7"
                      ],
                      description='Tidal constituents analysis in Python.',
