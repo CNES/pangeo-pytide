@@ -6,16 +6,15 @@
 
 # -- Path setup --------------------------------------------------------------
 import os
-import pytide.version
 
 # -- Project information -----------------------------------------------------
 
 project = 'pytide'
-copyright = '2019, CNES/CLS'
+copyright = '(2019, CNES/CLS)'
 author = 'CNES/CLS'
 
 # The full version, including alpha/beta/rc tags
-release = pytide.version.release()
+release = '1.1.0'
 
 # -- General configuration ---------------------------------------------------
 
