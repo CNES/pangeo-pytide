@@ -19,6 +19,10 @@ It was developed to analyze the *MIT/GCM LLC4320* model. The script
 ["mit_gcm_detiding.py"](https://github.com/CNES/pangeo-pytide/blob/master/src/scripts/mit_gcm_detiding.py)
 used to perform this analysis is distributed with this distribution.
 
+## Try it for yourself
+
+Try this library on [http://binder.pangeo.io/](pangeo.binder.io): <a href="https://binder.pangeo.io/v2/gh/CNES/pangeo-pytide/master?filepath=noteboooks%2Fmitgcm_detiding.ipynb"><img style="float;margin:2px 2px -4px 2px" src="https://binder.pangeo.io/badge_logo.svg"></a>
+
 ## How To Install
 
 [Anaconda](https://anaconda.org) is a free and open-source distribution of the
