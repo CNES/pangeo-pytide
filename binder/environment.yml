@@ -1,0 +1,5 @@
+name: pytide
+channels:
+  - conda-forge
+dependencies:
+  - pytide
