@@ -1,7 +1,8 @@
-![conda](https://anaconda.org/fbriol/pytide/badges/installer/conda.svg?service=github)
-![platforms](https://anaconda.org/fbriol/pytide/badges/platforms.svg?service=github)
-![latest-release-date](https://anaconda.org/fbriol/pytide/badges/latest_release_date.svg?service=github)
-![license](https://anaconda.org/fbriol/pytide/badges/license.svg?service=github)
+[![conda](https://anaconda.org/conda-forge/pytide/badges/installer/conda.svg?service=github)](https://www.anaconda.com/distribution/)
+[![platforms](https://anaconda.org/conda-forge/pytide/badges/platforms.svg?service=github)](https://anaconda.org/conda-forge/pytide)
+[![latest-release-date](https://anaconda.org/conda-forge/pytide/badges/latest_release_date.svg?service=github)](https://github.com/CNES/pangeo-pytide/commits/master)
+[![license](https://anaconda.org/conda-forge/pytide/badges/license.svg?service=github)](https://opensource.org/licenses/BSD-3-Clause)
+
 
 # pangeo-pytide
 
