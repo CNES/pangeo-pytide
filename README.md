@@ -97,4 +97,4 @@ construction of the instance.
 This result can then be used to determine a tidal height for the analyzed time
 series:
 
-    hp = wt.tide(time, w)
+    hp = wt.tide_from_time_series(time, w)
