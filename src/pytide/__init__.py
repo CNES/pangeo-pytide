@@ -27,16 +27,27 @@ class Wave(core.Wave):
 class WaveTable(core.WaveTable):
     """Properties of tidal constituents"""
 
-    def freq(self):
+    def __repr__(self):
+        return "%s.%s(%s)" % (self.__class__.__module__,
+                              self.__class__.__name__,
+                              ', '.join(self.constituents()))
+
+    def freq(self, as_dict=True):
         """Gets the waves frequencies in radians per seconds"""
+        if as_dict:
+            return {wave.name(): wave.freq for wave in self}
         return numpy.array([wave.freq for wave in self], dtype=numpy.float64)
 
     def constituents(self):
         """Gets the wave constituents handled by this instance"""
         return [wave.name() for wave in self]
 
+    def compute_nodal_corrections(self, time):
+        f, vu = super(core.WaveTable, self).compute_nodal_corrections(time)
+        return f.T, vu.T
+
     @staticmethod
-    def harmonic_analysis(h, f, vu, dtype=None):
+    def harmonic_analysis(h, f=None, vu=None, dtype=None, as_dict=True):
         """Harmonic Analysis
 
         The harmonic analysis method consists in expressing the ocean tidal
@@ -91,10 +102,12 @@ class WaveTable(core.WaveTable):
             numpy.ndarray: The complex number representing the different
             reconstructed waves.
         """
-        if dtype is None:
+        if as_dict:
             return {constituent: coefficient for constituent, coefficient in
                     zip(self.constituents(),
                         core.WaveTable.harmonic_analysis(h, f, vu))}
+        if dtype is None:
+            return core.WaveTable.harmonic_analysis(h, f, vu)
         return core.WaveTable.harmonic_analysis.astype(dtype)
 
     @staticmethod
