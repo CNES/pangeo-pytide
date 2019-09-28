@@ -92,7 +92,9 @@ class WaveTable(core.WaveTable):
             reconstructed waves.
         """
         if dtype is None:
-            return core.WaveTable.harmonic_analysis(h, f, vu)
+            return {constituent: coefficient for constituent, coefficient in
+                    zip(self.constituents(),
+                        core.WaveTable.harmonic_analysis(h, f, vu))}
         return core.WaveTable.harmonic_analysis.astype(dtype)
 
     @staticmethod
