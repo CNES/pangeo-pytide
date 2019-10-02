@@ -47,7 +47,8 @@ class WaveTable(core.WaveTable):
         return f.T, vu.T
 
     #@staticmethod
-    def harmonic_analysis(self, h, f=None, vu=None, dtype=None, as_dict=True):
+    def harmonic_analysis(self, h, time=None, f=None, vu=None, dtype=None,
+                          as_dict=True):
         """Harmonic Analysis
 
         The harmonic analysis method consists in expressing the ocean tidal
@@ -102,6 +103,8 @@ class WaveTable(core.WaveTable):
             numpy.ndarray: The complex number representing the different
             reconstructed waves.
         """
+        if time is not None:
+            f, vu = self.compute_nodal_corrections(time)
         if as_dict:
             return {constituent: coefficient for constituent, coefficient in
                     zip(self.constituents(),
