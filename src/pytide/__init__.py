@@ -43,11 +43,11 @@ class WaveTable(core.WaveTable):
         return [wave.name() for wave in self]
 
     def compute_nodal_corrections(self, time):
-        f, vu = super(core.WaveTable, self).compute_nodal_corrections(time)
+        f, vu = super(WaveTable, self).compute_nodal_corrections(time)
         return f.T, vu.T
 
-    @staticmethod
-    def harmonic_analysis(h, f=None, vu=None, dtype=None, as_dict=True):
+    #@staticmethod
+    def harmonic_analysis(self, h, f=None, vu=None, dtype=None, as_dict=True):
         """Harmonic Analysis
 
         The harmonic analysis method consists in expressing the ocean tidal
@@ -120,3 +120,10 @@ class WaveTable(core.WaveTable):
             period = (numpy.pi * 2) / wave.freq / 86400
             if period * n_periods < duration:
                 yield wave.name()
+
+    def tide_from_time_series(self, time, w):
+        if isinstance(w,dict):
+            _w = list(w.values())
+        else:
+            _w = w
+        return super(WaveTable, self).tide_from_tide_series(time, _w)
