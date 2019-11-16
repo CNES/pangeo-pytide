@@ -44,7 +44,6 @@ analyzed:
 .. code:: python
 
     f, vu = wt.compute_nodal_corrections(time)
-    f, vu = f.T, vu.T  # The matrices must be transposed.
 
 These coefficients are used by :meth:`harmonic analysis
 <pytide.WaveTable.harmonic_analysis>` to determine the properties of the

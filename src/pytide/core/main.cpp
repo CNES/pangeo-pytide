@@ -308,9 +308,9 @@ Returns:
             }
             py::ssize_t size = self.size();
             py::array_t<double, py::array::c_style> f(
-                py::array::ShapeContainer{epoch.size(), size});
+                py::array::ShapeContainer{size, epoch.size()});
             py::array_t<double, py::array::c_style> vu(
-                py::array::ShapeContainer{epoch.size(), size});
+                py::array::ShapeContainer{size, epoch.size()});
             {
               py::gil_scoped_release release;
 
@@ -322,8 +322,8 @@ Returns:
                 self.compute_nodal_corrections(_epoch(ix));
 
                 for (std::size_t jx = 0; jx < self.size(); ++jx) {
-                  _f(ix, jx) = self[jx]->f();
-                  _vu(ix, jx) = self[jx]->vu();
+                  _f(jx, ix) = self[jx]->f();
+                  _vu(jx, ix) = self[jx]->vu();
                 }
               }
             }

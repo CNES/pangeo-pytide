@@ -37,7 +37,6 @@ def t_axis(dirname):
 def compute_nodal_corrections(client, waves, time_series):
     t = time_series.astype(numpy.float64) * 1e-9
     f, v0u = waves.compute_nodal_corrections(t)
-    f, v0u = f.T, v0u.T
     return (dask.array.from_delayed(client.scatter(f, broadcast=True),
                                     shape=f.shape,
                                     dtype=f.dtype),
