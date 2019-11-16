@@ -21,7 +21,7 @@ used to perform this analysis is distributed with this distribution.
 
 ## Try it for yourself
 
-Try this library on [http://binder.pangeo.io/](pangeo.binder.io): <a href="https://binder.pangeo.io/v2/gh/CNES/pangeo-pytide/master?filepath=noteboooks%2Fmitgcm_detiding.ipynb"><img style="float;margin:2px 2px -4px 2px" src="https://binder.pangeo.io/badge_logo.svg"></a>
+Try this library on [http://binder.pangeo.io/](pangeo.binder.io): <a href="https://binder.pangeo.io/v2/gh/CNES/pangeo-pytide/master?filepath=notebooks%2Fmitgcm_detiding.ipynb"><img style="float;margin:2px 2px -4px 2px" src="https://binder.pangeo.io/badge_logo.svg"></a>
 
 ## How To Install
 
