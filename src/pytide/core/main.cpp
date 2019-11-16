@@ -379,7 +379,8 @@ Calculates the tide for a given tidal wave mapping.
 
 Args:
   epoch (float): Mapping date
-  wave (numpy.ndarray): Tidal wave mapping
+  wave (numpy.ndarray): A matrix containing the wave properties for each point
+    on the map.
 
 Return:
   numpy.ndarray:

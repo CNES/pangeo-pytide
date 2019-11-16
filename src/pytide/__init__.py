@@ -16,12 +16,10 @@ class AstronomicAngle(core.AstronomicAngle):
 Args:
   epoch (float, optional): Desired UTC time
 """
-    pass
 
 
 class Wave(core.Wave):
     """Tidal wave properties"""
-    pass
 
 
 class WaveTable(core.WaveTable):
@@ -93,6 +91,7 @@ class WaveTable(core.WaveTable):
             vu (numpy.ndarray): Astronomical argument at time :math:`t` + the
                 nodal correction coefficient applied to the phase of the
                 constituents analyzed
+            dtype (numpy.dtype, optional): Data type of the complex numbers
 
         Returns:
             numpy.ndarray: The complex number representing the different
@@ -100,7 +99,7 @@ class WaveTable(core.WaveTable):
         """
         if dtype is None:
             return core.WaveTable.harmonic_analysis(h, f, vu)
-        return core.WaveTable.harmonic_analysis.astype(dtype)
+        return core.WaveTable.harmonic_analysis(h, f, vu).astype(dtype)
 
     @staticmethod
     def select_waves_for_analysis(duration, n_periods=2):
@@ -112,3 +111,52 @@ class WaveTable(core.WaveTable):
             period = (numpy.pi * 2) / wave.freq / 86400
             if period * n_periods < duration:
                 yield wave.name()
+
+
+class WaveDict(WaveTable):
+    """Manages the tidal wave table as a dictionary."""
+    def freq(self):
+        """Gets the waves frequencies in radians per seconds"""
+        return {wave.name(): wave.freq for wave in self}
+
+    def harmonic_analysis(self, h, f, vu, dtype=None):
+        """Harmonic Analysis
+
+        Args:
+            h (numpy.ndarray): Sea level.
+            f (numpy.ndarray): Nodal correction coefficient applied to the
+                amplitude of the constituents analyzed.
+            vu (numpy.ndarray): Astronomical argument at time :math:`t` + the
+                nodal correction coefficient applied to the phase of the
+                constituents analyzed
+            dtype (numpy.dtype, optional): Data type of the complex number
+
+        Returns:
+            dict: A mapping between the wave name and its complex number
+            representing it.
+
+        .. seealso::
+
+            :py:meth:`WaveTable.harmonic_analysis`
+        """
+        analysis = super().harmonic_analysis(h, f, vu, dtype=dtype)
+        return {
+            constituent: coefficient
+            for constituent, coefficient in zip(self.constituents(), analysis)
+        }
+
+    def tide_from_tide_series(self, epoch, wave):
+        """Calculates the tide of a given time series.
+
+        Args:
+            epoch (numpy.ndarray): time series data
+            wave (dict): Tidal wave properties.
+
+        Returns:
+            numpy.ndarray: The tide calculated for the time series provided.
+        """
+        if len(wave) != len(self):
+            raise ValueError("wave must contain as many items as tidal "
+                             "constituents loaded")
+        wave_properties = [wave[item] for item in self]
+        return super().tide_from_tide_series(epoch, wave_properties)
