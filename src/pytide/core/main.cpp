@@ -297,7 +297,7 @@ Args:
     1970-01-01T00:00:00
 Returns:
   pytide.core.AstronomicAngle: The astronomic angle, indicating the date on
-    which the tide is to be calculated.
+  which the tide is to be calculated.
 )__doc__")
       .def(
           "compute_nodal_modulations",
@@ -364,8 +364,7 @@ Args:
   wave (numpy.ndarray): Tidal wave properties.
 
 Return:
-  numpy.ndarray:
-    The tide calculated for the time series provided.
+  numpy.ndarray: The tide calculated for the time series provided.
 )__doc__")
       .def(
           "tide_from_mapping",
@@ -383,8 +382,7 @@ Args:
     on the map.
 
 Return:
-  numpy.ndarray:
-    The tide calculated on the area of interest provided.
+  numpy.ndarray: The tide calculated on the area of interest provided.
 )__doc__")
       .def_static(
           "harmonic_analysis",
