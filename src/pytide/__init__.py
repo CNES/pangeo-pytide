@@ -26,6 +26,13 @@ class Wave(core.Wave):
 
 class WaveTable(core.WaveTable):
     """Properties of tidal constituents"""
+    def __repr__(self):
+        constituents = self.constituents()
+        if len(constituents) > 9:
+            constituents = constituents[:4] + ["..."] + constituents[-4:]
+
+        return "%s.%s(%s)" % (self.__class__.__module__,
+                              self.__class__.__name__, ', '.join(constituents))
 
     def freq(self):
         """Gets the waves frequencies in radians per seconds"""
