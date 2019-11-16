@@ -43,7 +43,7 @@ analyzed:
 
 .. code:: python
 
-    f, vu = wt.compute_nodal_corrections(time)
+    f, vu = wt.compute_nodal_modulations(time)
 
 These coefficients are used by :meth:`harmonic analysis
 <pytide.WaveTable.harmonic_analysis>` to determine the properties of the

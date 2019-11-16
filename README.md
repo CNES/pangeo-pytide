@@ -84,7 +84,7 @@ the object.
 The different nodal corrections are then calculated from the time series to be
 analyzed:
 
-    f, vu = wt.compute_nodal_corrections(time)
+    f, vu = wt.compute_nodal_modulations(time)
 
 These coefficients are used by [harmonic
 analysis](https://pangeo-pytide.readthedocs.io/en/latest/pytide.html#pytide.WaveTable.harmonic_analysis)

@@ -74,7 +74,7 @@ class WaveTable(unittest.TestCase):
             h = dataset['ocean'][:] * 1e-2
 
         wt = core.WaveTable()
-        f, vu = wt.compute_nodal_corrections(time)
+        f, vu = wt.compute_nodal_modulations(time)
         w = wt.harmonic_analysis(h, f, vu)
         delta = h - wt.tide_from_tide_series(time, w)
 

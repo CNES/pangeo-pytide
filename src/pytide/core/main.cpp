@@ -300,7 +300,7 @@ Returns:
     which the tide is to be calculated.
 )__doc__")
       .def(
-          "compute_nodal_corrections",
+          "compute_nodal_modulations",
           [](WaveTable& self, py::array_t<double>& epoch) -> py::tuple {
             if (epoch.ndim() != 1) {
               throw std::invalid_argument(
@@ -330,7 +330,7 @@ Returns:
             return py::make_tuple(f, vu);
           },
           py::arg("epoch"), R"__doc__(
-Compute nodal corrections.
+Compute nodal modulations for amplitude and phase.
 
 Args:
   epoch (numpy.ndarray): Desired UTC time expressed in number of seconds

@@ -34,9 +34,9 @@ def t_axis(dirname):
     return ds.dtime.values
 
 
-def compute_nodal_corrections(client, waves, time_series):
+def compute_nodal_modulations(client, waves, time_series):
     t = time_series.astype(numpy.float64) * 1e-9
-    f, v0u = waves.compute_nodal_corrections(t)
+    f, v0u = waves.compute_nodal_modulations(t)
     return (dask.array.from_delayed(client.scatter(f, broadcast=True),
                                     shape=f.shape,
                                     dtype=f.dtype),
@@ -356,7 +356,7 @@ def main():
     wave_table = pytide.WaveTable(args.tidal_constituents)
     logging.info("%d tidal constituents to be analysed", len(wave_table))
 
-    f, v0u = compute_nodal_corrections(client, wave_table, time_series[period])
+    f, v0u = compute_nodal_modulations(client, wave_table, time_series[period])
 
     if not os.path.exists(args.result):
         # Create the result file
