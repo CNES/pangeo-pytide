@@ -59,4 +59,4 @@ series:
 
 .. code:: python
 
-    hp = wt.tide(time, w)
+    hp = wt.tide_from_time_series(time, w)
