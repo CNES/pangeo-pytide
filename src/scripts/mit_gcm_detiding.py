@@ -35,7 +35,7 @@ def t_axis(dirname):
 
 
 def compute_nodal_modulations(client, waves, time_series):
-    t = time_series.astype(numpy.float64) * 1e-9
+    t = time_series.astype('datetime64[us]')
     f, v0u = waves.compute_nodal_modulations(t)
     return (dask.array.from_delayed(client.scatter(f, broadcast=True),
                                     shape=f.shape,

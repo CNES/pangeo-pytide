@@ -6,6 +6,8 @@
 Tidal constituents analysis
 ###########################
 """
+from typing import List, Optional, Tuple, Union
+import datetime
 import numpy
 from . import core
 
@@ -13,9 +15,14 @@ from . import core
 class AstronomicAngle(core.AstronomicAngle):
     """Initialize some astronomic data useful for nodal corrections.
 
-Args:
-  epoch (float, optional): Desired UTC time
-"""
+    Args:
+        date (datetime.datetime, optional): Desired UTC time
+    """
+    def __init__(self, date: Optional[datetime.datetime] = None):
+        if date is None:
+            super().__init__()
+        else:
+            super().__init__(core.timestamp(date))
 
 
 class Wave(core.Wave):
@@ -32,13 +39,51 @@ class WaveTable(core.WaveTable):
         return "%s.%s(%s)" % (self.__class__.__module__,
                               self.__class__.__name__, ', '.join(constituents))
 
-    def freq(self):
+    def freq(self) -> numpy.ndarray:
         """Gets the waves frequencies in radians per seconds"""
         return numpy.array([wave.freq for wave in self], dtype=numpy.float64)
 
-    def constituents(self):
+    def constituents(self) -> List[str]:
         """Gets the wave constituents handled by this instance"""
         return [wave.name() for wave in self]
+
+    def compute_nodal_corrections(self, date: datetime.datetime
+                                  ) -> core.AstronomicAngle:
+        """Compute nodal corrections.
+
+        Args:
+            date (datetime.datetime): Desired date
+
+        Return:
+            core.AstronomicAngle: The astronomic angle, indicating the date on
+            which the tide is to be calculated.
+        """
+        return super().compute_nodal_corrections(core.timestamp(date))
+
+    def compute_nodal_modulations(
+            self, dates: Union[List[datetime.datetime], numpy.ndarray]
+    ) -> Tuple[numpy.ndarray, numpy.ndarray]:
+        """Compute nodal modulations for amplitude and phase.
+
+        Args:
+            dates (list, numpy.ndarray): Desired dates
+
+        Return:
+            tuple: the nodal correction for amplitude, v (greenwich argument)
+            + u (nodal correction for phase)
+        """
+        if isinstance(dates, list) and all(
+                isinstance(item, datetime.datetime) for item in dates):
+            epoch = [core.timestamp(item) for item in dates]
+        elif isinstance(dates, numpy.ndarray):
+            if not numpy.issubdtype(dates.dtype, numpy.datetime64):
+                raise TypeError("dates has wrong datetime unit, expected "
+                                "datetime64, got " + str(dates.dtype))
+            epoch = dates.astype("datetime64[s]").astype("float64")
+        else:
+            raise TypeError("unexpected type for dates: " +
+                            type(dates).__name__)
+        return super().compute_nodal_modulations(epoch)
 
     @staticmethod
     def harmonic_analysis(h, f, vu, dtype=None):
