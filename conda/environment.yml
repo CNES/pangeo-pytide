@@ -4,4 +4,4 @@ dependencies:
   - pytide
 
 channels:
-  - fbriol
+  - conda-forge
