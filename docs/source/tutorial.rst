@@ -14,7 +14,7 @@ example:
     import pytide
 
     with netCDF4.Dataset("tests/dataset/fes_tide_time_series.nc") as dataset:
-        time = dataset['time'][:] * 1e-6    # microseconds to epoch
+        time = (ds.variables['time'][:]).astype("datetime64[us]")
         h = dataset['ocean'][:] * 1e-2      # cm to m
 
 
@@ -56,7 +56,6 @@ different tidal waves defined during the construction of the instance.
 This result can then be used to determine a tidal height for the analyzed time
 series:
 
-
 .. code:: python
 
-    hp = wt.tide_from_time_series(time, w)
+    hp = wt.tide_from_tide_series(time, w)
