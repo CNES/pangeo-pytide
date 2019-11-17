@@ -23,6 +23,18 @@ if not (MAJOR >= 3 and MINOR >= 6):
     raise RuntimeError("Python %d.%d is not supported, "
                        "you need at least Python 3.6." % (MAJOR, MINOR))
 
+# Working directory
+WORKING_DIRECTORY = pathlib.Path(__file__).parent.absolute()
+
+
+def build_dirname(extname=None):
+    """Returns the name of the build directory"""
+    extname = '' if extname is None else os.sep.join(extname.split(".")[:-1])
+    return str(
+        pathlib.Path(WORKING_DIRECTORY, "build",
+                     "lib.%s-%d.%d" % (sysconfig.get_platform(), MAJOR, MINOR),
+                     extname))
+
 
 def execute(cmd):
     """Executes a command and returns the lines displayed on the standard
@@ -51,8 +63,8 @@ def update_meta(path, version):
 
 def revision():
     """Returns the software version"""
-    cwd = pathlib.Path().absolute()
-    module = os.path.join(cwd, 'src', 'pytide', 'version.py')
+    os.chdir(WORKING_DIRECTORY)
+    module = pathlib.Path(WORKING_DIRECTORY, 'src', 'pytide', 'version.py')
     stdout = execute("git describe --tags --dirty --long --always").strip()
     pattern = re.compile(r'([\w\d\.]+)-(\d+)-g([\w\d]+)(?:-(dirty))?')
     match = pattern.search(stdout)
@@ -60,7 +72,7 @@ def revision():
     # If the information is unavailable (execution of this function outside the
     # development environment), file creation is not possible
     if not stdout:
-        pattern = re.compile(r'\s+result = "(.*)"')
+        pattern = re.compile(r'return "(\d+\.\d+\.\d+)"')
         with open(module, "r") as stream:
             for line in stream:
                 match = pattern.search(line)
@@ -68,28 +80,22 @@ def revision():
                     return match.group(1)
         raise AssertionError()
 
-    # No tag already registred
-    if match is None:
-        pattern = re.compile(r'([\w\d]+)(?:-(dirty))?')
-        match = pattern.search(stdout)
-        version = "0.1"
-        sha1 = match.group(1)
-    else:
-        version = match.group(1)
-        sha1 = match.group(3)
+    assert match is not None, 'No GIT tag found'
+    version = match.group(1)
+    sha1 = match.group(3)
 
     stdout = execute("git log  %s -1 --format=\"%%H %%at\"" % sha1)
     stdout = stdout.strip().split()
     date = datetime.datetime.utcfromtimestamp(int(stdout[1]))
 
-    # This file is not present in the distribution, but only in the GIT
-    # repository of the source code.
-    meta = os.path.join(cwd, 'conda', 'meta.yaml')
-    if os.path.exists(meta):
+    # Conda configuration files are not present in the distribution, but only
+    # in the GIT repository of the source code.
+    meta = pathlib.Path(WORKING_DIRECTORY, 'conda', 'meta.yaml')
+    if meta.exists():
         update_meta(meta, version)
 
     # Updating the version number description for sphinx
-    conf = os.path.join(cwd, 'docs', 'source', 'conf.py')
+    conf = pathlib.Path(WORKING_DIRECTORY, 'docs', 'source', 'conf.py')
     with open(conf, "r") as stream:
         lines = stream.readlines()
     pattern = re.compile(r'(\w+)\s+=\s+(.*)')
@@ -115,19 +121,20 @@ Get software version information
 """
 
 
-def release(full: bool = False) -> str:
+def release() -> str:
     """Returns the software version number"""
-    result = "{version}"
-    if full:
-        result += " ({date})"
-    return result
+    return "{version}"
+
+
+def date() -> str:
+    """Returns the creation date of this release"""
+    return "{date}"
 '''.format(version=version, date=date.strftime("%d %B %Y")))
     return version
 
 
 class CMakeExtension(setuptools.Extension):
     """Python extension to build"""
-
     def __init__(self, name):
         super(CMakeExtension, self).__init__(name, sources=[])
 
@@ -140,6 +147,9 @@ class BuildExt(setuptools.command.build_ext.build_ext):
 
     #: Preferred Eigen root
     EIGEN3_INCLUDE_DIR = None
+
+    #: Run CMake to configure this project
+    RECONFIGURE = None
 
     def run(self):
         """A command's raison d'etre: carry out the action"""
@@ -199,10 +209,9 @@ class BuildExt(setuptools.command.build_ext.build_ext):
 
         # These dirs will be created in build_py, so if you don't have
         # any python sources to bundle, the dirs will be missing
-        build_temp = pathlib.Path(self.build_temp)
+        build_temp = pathlib.Path(WORKING_DIRECTORY, self.build_temp)
         build_temp.mkdir(parents=True, exist_ok=True)
-        extdir = pathlib.Path(self.get_ext_fullpath(
-            ext.name)).absolute().parent
+        extdir = build_dirname(ext.name)
 
         cfg = 'Debug' if self.debug else 'Release'
 
@@ -233,25 +242,38 @@ class BuildExt(setuptools.command.build_ext.build_ext):
             build_args.insert(0, "--verbose")
 
         os.chdir(str(build_temp))
-        self.spawn(['cmake', str(cwd)] + cmake_args)
+
+        # Has CMake ever been executed?
+        if pathlib.Path(build_temp, "CMakeFiles",
+                        "TargetDirectories.txt").exists():
+            # The user must force the reconfiguration
+            configure = self.RECONFIGURE is not None
+        else:
+            configure = True
+
+        if configure:
+            self.spawn(['cmake', str(WORKING_DIRECTORY)] + cmake_args)
         if not self.dry_run:
             self.spawn(['cmake', '--build', '.', '--target', 'core'] +
                        build_args)
-        os.chdir(str(cwd))
+        os.chdir(str(WORKING_DIRECTORY))
 
 
 class Build(distutils.command.build.build):
     """Build everything needed to install"""
     user_options = distutils.command.build.build.user_options
-    user_options += [('eigen-root=', 'e',
-                      'Preferred Eigen3 include directory'),
-                     ('cxx-compiler=', 'x', 'Preferred C++ compiler')]
+    user_options += [
+        ('eigen-root=', None, 'Preferred Eigen3 include directory'),
+        ('cxx-compiler=', None, 'Preferred C++ compiler'),
+        ('reconfigure', None, 'Forces CMake to reconfigure this project')
+    ]
 
     def initialize_options(self):
         """Set default values for all the options that this command supports"""
         super().initialize_options()
         self.cxx_compiler = None
         self.eigen_root = None
+        self.reconfigure = None
 
     def run(self):
         """A command's raison d'etre: carry out the action"""
@@ -259,6 +281,8 @@ class Build(distutils.command.build.build):
             BuildExt.CXX_COMPILER = self.cxx_compiler
         if self.eigen_root is not None:
             BuildExt.EIGEN3_INCLUDE_DIR = self.eigen_root
+        if self.reconfigure is not None:
+            BuildExt.RECONFIGURE = True
         super().run()
 
 
@@ -274,7 +298,8 @@ def main():
                          "Operating System :: MacOS",
                          "Operating System :: Microsoft :: Windows",
                          "Programming Language :: Python :: 3.6",
-                         "Programming Language :: Python :: 3.7"
+                         "Programming Language :: Python :: 3.7",
+                         "Programming Language :: Python :: 3.8"
                      ],
                      description='Tidal constituents analysis in Python.',
                      url='https://github.com/CNES/pangeo-pytide',
