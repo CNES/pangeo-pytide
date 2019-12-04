@@ -4,6 +4,7 @@
 # BSD-style license that can be found in the LICENSE file.
 import datetime
 import os
+import pickle
 import math
 import numpy
 import unittest
@@ -80,6 +81,14 @@ class WaveTable(unittest.TestCase):
 
         self.assertAlmostEqual(delta.mean(), 0, delta=1e-16)
         self.assertAlmostEqual(delta.std(), 0, delta=1e-12)
+
+    def test_pickle(self):
+        wt = core.WaveTable(['O1', 'P1'])
+        unfrozen = pickle.loads(pickle.dumps(wt))
+        self.assertTrue(isinstance(unfrozen, core.WaveTable))
+        self.assertEqual(len(wt), len(unfrozen))
+        self.assertListEqual([item.name() for item in wt],
+                             [item.name() for item in unfrozen])
 
 
 if __name__ == "__main__":

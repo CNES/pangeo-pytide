@@ -117,6 +117,26 @@ static py::array_t<double> tide_from_mapping(
   return result;
 }
 
+/// Get a tuple that fully encodes the state of this instance
+static auto wt_getstate(const WaveTable& self) -> py::tuple {
+  auto result = py::tuple(self.size());
+  for (size_t ix = 0; ix < self.size(); ++ix) {
+    result[ix] = self[ix]->name();
+  }
+  return result;
+}
+
+/// Create a new instance from a registered state of an instance of this
+/// object.
+static auto wt_setstate(const pybind11::tuple& state) -> WaveTable {
+  auto waves = std::vector<std::string>();
+  waves.reserve(state.size());
+  for (size_t ix = 0; ix < state.size(); ++ix) {
+    waves.push_back(state[ix].cast<std::string>());
+  }
+  return WaveTable(waves);
+}
+
 PYBIND11_MODULE(core, m) {
   if (!PyDateTimeAPI) {
     PyDateTime_IMPORT;
@@ -436,5 +456,8 @@ Returns:
           [](const WaveTable& self) {
             return py::make_iterator(self.begin(), self.end());
           },
-          py::keep_alive<0, 1>());
+          py::keep_alive<0, 1>())
+      .def(py::pickle(
+          [](const WaveTable& self) { return wt_getstate(self); },
+          [](const py::tuple& state) { return wt_setstate(state); }));
 }

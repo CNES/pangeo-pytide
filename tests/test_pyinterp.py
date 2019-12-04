@@ -8,6 +8,7 @@ import math
 import numpy
 import unittest
 import netCDF4
+import numpy
 import pytide
 
 
@@ -72,6 +73,18 @@ class WaveTable(unittest.TestCase):
             h = dataset['ocean'][:] * 1e-2
 
         wt = pytide.WaveTable()
+
+        wt.compute_nodal_modulations(
+            [datetime.datetime(2012, 1, 1),
+             datetime.datetime(2012, 1, 2)])
+        wt.compute_nodal_modulations(
+            numpy.array([
+                numpy.datetime64("2012-01-01"),
+                numpy.datetime64("2012-01-02")
+            ]))
+
+        with self.assertRaises(TypeError):
+            wt.compute_nodal_modulations(datetime.datetime(2012, 1, 1))
 
         with self.assertRaises(TypeError):
             wt.compute_nodal_modulations(time)
