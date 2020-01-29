@@ -10,7 +10,7 @@ import os
 # -- Project information -----------------------------------------------------
 
 project = 'pytide'
-copyright = '(2019, CNES/CLS)'
+copyright = '(2020, CNES/CLS)'
 author = 'CNES/CLS'
 
 # The full version, including alpha/beta/rc tags
