@@ -5,8 +5,6 @@
 import datetime
 import os
 import pickle
-import math
-import numpy
 import unittest
 import netCDF4
 from pytide import core
