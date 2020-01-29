@@ -3,6 +3,8 @@
 #
 # All rights reserved. Use of this source code is governed by a
 # BSD-style license that can be found in the LICENSE file.
+"""This script is the entry point for building, distributing and installing
+this module using distutils/setuptools."""
 import datetime
 import distutils.command.build
 import os
@@ -116,6 +118,10 @@ def revision():
     # Finally, write the file containing the version number.
     with open(module, 'w') as handler:
         handler.write('''"""
+# Copyright (c) 2020 CNES
+#
+# All rights reserved. Use of this source code is governed by a
+# BSD-style license that can be found in the LICENSE file.
 Get software version information
 ================================
 """
@@ -148,6 +154,9 @@ class BuildExt(setuptools.command.build_ext.build_ext):
     #: Preferred Eigen root
     EIGEN3_INCLUDE_DIR = None
 
+    #: Preferred MKL root
+    MKL_ROOT = None
+
     #: Run CMake to configure this project
     RECONFIGURE = None
 
@@ -160,23 +169,38 @@ class BuildExt(setuptools.command.build_ext.build_ext):
     @staticmethod
     def eigen():
         """Get the default Eigen3 path in Anaconda's environnement."""
-        eigen_include_dir = os.path.join(sys.prefix, "include", "eigen3")
-        if os.path.exists(eigen_include_dir):
-            return "-DEIGEN3_INCLUDE_DIR=" + eigen_include_dir
-        eigen_include_dir = os.path.join(sys.prefix, "Library", "include",
+        eigen_include_dir = pathlib.Path(sys.prefix, "include", "eigen3")
+        if eigen_include_dir.exists():
+            return "-DEIGEN3_INCLUDE_DIR=" + str(eigen_include_dir)
+        eigen_include_dir = pathlib.Path(sys.prefix, "Library", "include",
                                          "eigen3")
-        if not os.path.exists(eigen_include_dir):
-            eigen_include_dir = os.path.dirname(eigen_include_dir)
-        if not os.path.exists(eigen_include_dir):
+        if not eigen_include_dir.exists():
+            eigen_include_dir = eigen_include_dir.parent
+        if not eigen_include_dir.exists():
             raise RuntimeError(
                 "Unable to find the Eigen3 library in the conda distribution "
                 "used.")
-        return "-DEIGEN3_INCLUDE_DIR=" + eigen_include_dir
+        return "-DEIGEN3_INCLUDE_DIR=" + str(eigen_include_dir)
+
+    @staticmethod
+    def mkl():
+        """Get the default MKL path in Anaconda's environnement."""
+        mkl_header = pathlib.Path(sys.prefix, "include", "mkl.h")
+        if mkl_header.exists():
+            os.environ["MKLROOT"] = sys.prefix
+            return
+        mkl_header = pathlib.Path(sys.prefix, "Library", "include", "mkl.h")
+        if mkl_header.exists():
+            os.environ["MKLROOT"] = str(pathlib.Path(sys.prefix, "Library"))
+            return
+        raise RuntimeError(
+            "Unable to find the MKL library in the conda distribution "
+            "used.")
 
     @staticmethod
     def is_conda():
         """Detect if the Python interpreter is part of a conda distribution."""
-        result = os.path.exists(os.path.join(sys.prefix, 'conda-meta'))
+        result = pathlib.Path(sys.prefix, 'conda-meta').exists()
         if not result:
             try:
                 # pylint: disable=unused-import
@@ -201,12 +225,15 @@ class BuildExt(setuptools.command.build_ext.build_ext):
         elif is_conda:
             result.append(self.eigen())
 
+        if self.MKL_ROOT is not None:
+            os.environ["MKLROOT"] = self.MKL_ROOT
+        elif is_conda:
+            self.mkl()
+
         return result
 
     def build_cmake(self, ext):
         """Execute cmake to build the Python extension"""
-        cwd = pathlib.Path().absolute()
-
         # These dirs will be created in build_py, so if you don't have
         # any python sources to bundle, the dirs will be missing
         build_temp = pathlib.Path(WORKING_DIRECTORY, self.build_temp)
@@ -217,7 +244,8 @@ class BuildExt(setuptools.command.build_ext.build_ext):
 
         cmake_args = [
             "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=" + str(extdir),
-            "-DPYTHON_EXECUTABLE=" + sys.executable
+            "-DPYTHON_EXECUTABLE=" + sys.executable,
+            "-DCMAKE_PREFIX_PATH=" + sys.prefix
         ] + self.set_cmake_user_options()
 
         build_args = ['--config', cfg]
@@ -265,6 +293,7 @@ class Build(distutils.command.build.build):
     user_options += [
         ('eigen-root=', None, 'Preferred Eigen3 include directory'),
         ('cxx-compiler=', None, 'Preferred C++ compiler'),
+        ('mkl-root=', None, 'Preferred MKL installation prefix'),
         ('reconfigure', None, 'Forces CMake to reconfigure this project')
     ]
 
@@ -273,6 +302,7 @@ class Build(distutils.command.build.build):
         super().initialize_options()
         self.cxx_compiler = None
         self.eigen_root = None
+        self.mkl_root = None
         self.reconfigure = None
 
     def run(self):
