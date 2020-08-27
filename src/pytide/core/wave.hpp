@@ -1051,7 +1051,7 @@ class M8 : public Wave {
 class MSf : public Wave {
  public:
   MSf()
-      : Wave(kMSf, 0, 2, -2, 0, 0, 0, 0, 2, -2, 0, 0, kShortPeriod,
+      : Wave(kMSf, 0, 2, -2, 0, 0, 0, 0, 2, -2, 0, 0, kLongPeriod,
              &AstronomicAngle::f_m2) {}
 };
 
