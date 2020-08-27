@@ -227,7 +227,7 @@ class BuildExt(setuptools.command.build_ext.build_ext):
 
         if self.MKL_ROOT is not None:
             os.environ["MKLROOT"] = self.MKL_ROOT
-        elif is_conda:
+        elif is_conda and platform.system() != 'Darwin':
             self.mkl()
 
         return result

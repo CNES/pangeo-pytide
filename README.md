@@ -3,7 +3,6 @@
 [![latest-release-date](https://anaconda.org/conda-forge/pytide/badges/latest_release_date.svg?service=github)](https://github.com/CNES/pangeo-pytide/commits/master)
 [![license](https://anaconda.org/conda-forge/pytide/badges/license.svg?service=github)](https://opensource.org/licenses/BSD-3-Clause)
 
-
 # pangeo-pytide
 
 ## About

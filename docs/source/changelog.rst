@@ -1,6 +1,10 @@
 Changelog
 #########
 
+1.2.2 (31 January, 2020)
+------------------------
+* Use MKL provided by conda for least square resolution
+
 1.2.1 (5 December, 2019)
 ------------------------
 * Pickle/unpickle WaveTable
