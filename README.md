@@ -58,7 +58,9 @@ example:
     import pytide
 
     with netCDF4.Dataset("tests/dataset/fes_tide_time_series.nc") as dataset:
-        time = dataset['time'][:] * 1e-6    # microseconds to epoch
+        time = netCDF4.num2date(dataset['time'][:],
+                                dataset['time'].unit,
+                                only_use_cftime_datetimes=False)
         h = dataset['ocean'][:] * 1e-2      # cm to m
 
 Then, we will create an instance of a `pytide.WaveTable` object:
@@ -83,7 +85,9 @@ the object.
 The different nodal corrections are then calculated from the time series to be
 analyzed:
 
-    f, vu = wt.compute_nodal_modulations(time)
+    f, vu = wt.compute_nodal_modulations(time.astype("datetime64"))
+    # You can also use a list of datetime.datetime objects
+    # wt.compute_nodal_modulations(list(time))
 
 These coefficients are used by [harmonic
 analysis](https://pangeo-pytide.readthedocs.io/en/latest/pytide.html#pytide.WaveTable.harmonic_analysis)
@@ -95,4 +99,4 @@ construction of the instance.
 This result can then be used to determine a tidal height for the analyzed time
 series:
 
-    hp = wt.tide_from_time_series(time, w)
+    hp = wt.tide_from_tide_series(time, w)
