@@ -2,11 +2,13 @@
 #
 # All rights reserved. Use of this source code is governed by a
 # BSD-style license that can be found in the LICENSE file.
+import concurrent.futures
 import datetime
 import os
 import pickle
 import unittest
 import netCDF4
+import numpy
 from pytide import core
 
 
@@ -87,6 +89,28 @@ class WaveTable(unittest.TestCase):
         self.assertEqual(len(wt), len(unfrozen))
         self.assertListEqual([item.name() for item in wt],
                              [item.name() for item in unfrozen])
+
+    def test_reentering(self):
+        with netCDF4.Dataset(self.DATASET) as dataset:
+            time = dataset['time'][:4096] * 1e-6
+            h = dataset['ocean'][:4096] * 1e-2
+
+        wt = core.WaveTable()
+        f, vu = wt.compute_nodal_modulations(time)
+        w = wt.harmonic_analysis(h, f, vu)
+
+        result = []
+        with concurrent.futures.ThreadPoolExecutor() as client:
+            futures = []
+            for item in range(50):
+                futures.append(client.submit(wt.tide_from_tide_series, time,
+                                             w))
+            for item in concurrent.futures.as_completed(futures):
+                result.append(item.result())
+
+        first = result.pop()
+        for item in result:
+            self.assertTrue(numpy.all(first == item))
 
 
 if __name__ == "__main__":

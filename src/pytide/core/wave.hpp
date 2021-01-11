@@ -1088,6 +1088,16 @@ class WaveTable {
   /// Default constructor
   WaveTable(const std::vector<std::string>& waves = {});
 
+  /// Copy constructor
+  WaveTable(const WaveTable& wt) {
+    auto waves = std::vector<std::string>();
+    waves.reserve(wt.size());
+    for (const auto& item : wt.waves_) {
+      waves.push_back(item->name());
+    }
+    *this = WaveTable(waves);
+  }
+
   /// Gets the tidal waves known
   static std::vector<std::string> known_constituents();
 

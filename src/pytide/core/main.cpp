@@ -2,11 +2,12 @@
 //
 // All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
-#include <pybind11/pybind11.h>
 #include <pybind11/eigen.h>
-#include <pybind11/stl.h>
+#include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
+#include <pybind11/stl.h>
 #include <datetime.h>
+
 #include "astronomic_angle.hpp"
 #include "wave.hpp"
 
@@ -67,13 +68,16 @@ static py::array_t<double> tide_from_time_series(
   auto _result = result.mutable_unchecked<1>();
   {
     py::gil_scoped_release release;
+    // The wave properties of the object must be immutable for the provided
+    // instance.
+    auto _self = WaveTable(self);
 
     for (py::ssize_t ix = 0; ix < epoch.rows(); ++ix) {
       double tide = 0;
-      self.compute_nodal_corrections(epoch(ix));
+      _self.compute_nodal_corrections(epoch(ix));
 
-      for (size_t jx = 0; jx < self.size(); ++jx) {
-        const auto& item = self[jx];
+      for (size_t jx = 0; jx < _self.size(); ++jx) {
+        const auto& item = _self[jx];
         double phi = item->vu();
 
         tide += item->f() * (wave(jx).real() * std::cos(phi) +
@@ -95,17 +99,20 @@ static py::array_t<double> tide_from_mapping(
         "the first dimension of wave must contain as many items as "
         "tidal constituents loaded");
   }
-  self.compute_nodal_corrections(epoch);
   py::array_t<double, py::array::c_style> result(
       py::array::ShapeContainer{wave.cols()});
   auto _result = result.mutable_unchecked<1>();
   {
     py::gil_scoped_release release;
+    // The wave properties of the object must be immutable for the provided
+    // instance.
+    auto _self = WaveTable(self);
+    _self.compute_nodal_corrections(epoch);
 
     for (py::ssize_t ix = 0; ix < wave.cols(); ++ix) {
       double tide = 0;
-      for (size_t jx = 0; jx < self.size(); ++jx) {
-        const auto& item = self[jx];
+      for (size_t jx = 0; jx < _self.size(); ++jx) {
+        const auto& item = _self[jx];
         double phi = item->vu();
 
         tide += item->f() * (wave(jx, ix).real() * std::cos(phi) +
@@ -333,17 +340,19 @@ Returns:
                 py::array::ShapeContainer{size, epoch.size()});
             {
               py::gil_scoped_release release;
-
+              // The wave properties of the object must be immutable for the
+              // provided instance.
+              auto _self = WaveTable(self);
               auto _epoch = epoch.mutable_unchecked<1>();
               auto _f = f.mutable_unchecked<2>();
               auto _vu = vu.mutable_unchecked<2>();
 
               for (py::ssize_t ix = 0; ix < epoch.shape(0); ++ix) {
-                self.compute_nodal_corrections(_epoch(ix));
+                _self.compute_nodal_corrections(_epoch(ix));
 
-                for (std::size_t jx = 0; jx < self.size(); ++jx) {
-                  _f(jx, ix) = self[jx]->f();
-                  _vu(jx, ix) = self[jx]->vu();
+                for (std::size_t jx = 0; jx < _self.size(); ++jx) {
+                  _f(jx, ix) = _self[jx]->f();
+                  _vu(jx, ix) = _self[jx]->vu();
                 }
               }
             }
