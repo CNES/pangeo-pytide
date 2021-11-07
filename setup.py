@@ -6,7 +6,6 @@
 """This script is the entry point for building, distributing and installing
 this module using distutils/setuptools."""
 import datetime
-import distutils.command.build
 import os
 import pathlib
 import platform
@@ -17,6 +16,8 @@ import setuptools.command.install
 import subprocess
 import sys
 import sysconfig
+# The setuptools must be imported before distutils
+import distutils.command.build
 
 # Check Python requirement
 MAJOR = sys.version_info[0]
@@ -73,7 +74,7 @@ def revision():
 
     # If the information is unavailable (execution of this function outside the
     # development environment), file creation is not possible
-    if not stdout:
+    if not stdout or match is None:
         pattern = re.compile(r'return "(\d+\.\d+\.\d+)"')
         with open(module, "r") as stream:
             for line in stream:
@@ -82,7 +83,6 @@ def revision():
                     return match.group(1)
         raise AssertionError()
 
-    assert match is not None, 'No GIT tag found'
     version = match.group(1)
     sha1 = match.group(3)
 
