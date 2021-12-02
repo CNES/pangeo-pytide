@@ -3,8 +3,8 @@
 // All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 #include <pybind11/eigen.h>
-#include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <datetime.h>
 
@@ -27,7 +27,7 @@ static inline int64_t days_from_civil(int y, unsigned m, unsigned d) {
 }
 
 /// Return POSIX timestamp as double
-double timestamp(py::handle datetime) {
+double timestamp(py::handle& datetime) {
   if (!datetime) {
     throw std::invalid_argument(
         "a datetime.datetime is required (got type null)");
@@ -84,6 +84,63 @@ static py::array_t<double> tide_from_time_series(
                              wave(jx).imag() * std::sin(phi));
       }
       _result(ix) = tide;
+    }
+  }
+  return result;
+}
+
+static auto npdatetime64_scale(const py::dtype& dtype) -> double {
+  auto type_num = py::detail::array_descriptor_proxy(dtype.ptr())->type_num;
+  if (type_num != 21 /* NPY_DATETIME */) {
+    throw std::invalid_argument(
+        "array must be a numpy array of datetime64 items");
+  }
+  auto units = std::string(py::str(static_cast<py::handle>(dtype)));
+  if (units == "datetime64[as]") {
+    return 1e-18;
+  }
+  if (units == "datetime64[fs]") {
+    return 1e-15;
+  }
+  if (units == "datetime64[ps]") {
+    return 1e-12;
+  }
+  if (units == "datetime64[ns]") {
+    return 1e-9;
+  }
+  if (units == "datetime64[us]") {
+    return 1e-6;
+  }
+  if (units == "datetime64[ms]") {
+    return 1e-3;
+  }
+  if (units == "datetime64[s]") {
+    return 1;
+  }
+  if (units == "datetime64[m]") {
+    return 60;
+  }
+  if (units == "datetime64[h]") {
+    return 3600;
+  }
+  if (units == "datetime64[D]") {
+    return 86400;
+  }
+  throw std::invalid_argument(
+      "array has wrong datetime unit, expected datetime64[as], "
+      "datetime64[fs], datetime64[ns], datetime64[us], datetime64[ms] or "
+      "datetime64[s] got " +
+      units);
+}
+
+static auto npdatetime64_to_epoch(const py::array& array) -> Eigen::VectorXd {
+  auto scale = npdatetime64_scale(array.dtype());
+  auto _array = array.unchecked<int64_t, 1>();
+  auto result = Eigen::VectorXd(_array.size());
+  {
+    py::gil_scoped_release release;
+    for (py::ssize_t ix = 0; ix < _array.size(); ++ix) {
+      result(ix) = _array(ix) * scale;
     }
   }
   return result;
@@ -160,12 +217,16 @@ Core module
       py::arg("date"), "Return POSIX timestamp as float");
 
   py::class_<AstronomicAngle>(m, "AstronomicAngle")
-      .def(py::init<>())
-      .def(py::init<const double>(), py::arg("epoch"), R"__doc__(
+      .def(py::init([](py::handle& date) {
+             auto* ptr = date.is_none() ? new AstronomicAngle()
+                                        : new AstronomicAngle(timestamp(date));
+             return std::unique_ptr<AstronomicAngle>(ptr);
+           }),
+           py::arg("date") = py::none(), R"__doc__(
 Initialize some astronomic data useful for nodal corrections.
 
 Args:
-  epoch (float, optional): Desired UTC time)__doc__")
+  date (datetime.datetime, optional): Desired UTC time)__doc__")
       .def_property_readonly("t", &AstronomicAngle::t, "Hour angle of mean sun")
       .def_property_readonly("n", &AstronomicAngle::n,
                              "Longitude of moon's node")
@@ -313,42 +374,44 @@ Gets the wave name
                   "Gets the tidal waves known by this object")
       .def(
           "compute_nodal_corrections",
-          [](WaveTable& self, double epoch) -> AstronomicAngle {
+          [](WaveTable& self, py::handle& date) -> AstronomicAngle {
+            auto epoch = timestamp(date);
+            auto gil = py::gil_scoped_release();
             return self.compute_nodal_corrections(epoch);
           },
-          py::arg("epoch"), R"__doc__(
+          py::arg("date"), R"__doc__(
 Compute nodal corrections.
 
 Args:
-  epoch (float): Desired UTC time expressed in number of seconds elapsed since
-    1970-01-01T00:00:00
+  date (datetime.datetime): Desired UTC date
 Returns:
   pytide.core.AstronomicAngle: The astronomic angle, indicating the date on
   which the tide is to be calculated.
 )__doc__")
       .def(
           "compute_nodal_modulations",
-          [](WaveTable& self, py::array_t<double>& epoch) -> py::tuple {
-            if (epoch.ndim() != 1) {
+          [](WaveTable& self, py::array& dates) -> py::tuple {
+            if (dates.ndim() != 1) {
               throw std::invalid_argument(
-                  "epoch must be a one-dimensional array");
+                  "dates must be a one-dimensional array");
             }
+            auto scale = npdatetime64_scale(dates.dtype());
             py::ssize_t size = self.size();
             py::array_t<double, py::array::c_style> f(
-                py::array::ShapeContainer{size, epoch.size()});
+                py::array::ShapeContainer{size, dates.size()});
             py::array_t<double, py::array::c_style> vu(
-                py::array::ShapeContainer{size, epoch.size()});
+                py::array::ShapeContainer{size, dates.size()});
             {
               py::gil_scoped_release release;
               // The wave properties of the object must be immutable for the
               // provided instance.
               auto _self = WaveTable(self);
-              auto _epoch = epoch.mutable_unchecked<1>();
+              auto _dates = dates.unchecked<int64_t, 1>();
               auto _f = f.mutable_unchecked<2>();
               auto _vu = vu.mutable_unchecked<2>();
 
-              for (py::ssize_t ix = 0; ix < epoch.shape(0); ++ix) {
-                _self.compute_nodal_corrections(_epoch(ix));
+              for (py::ssize_t ix = 0; ix < dates.size(); ++ix) {
+                _self.compute_nodal_corrections(_dates(ix) * scale);
 
                 for (std::size_t jx = 0; jx < _self.size(); ++jx) {
                   _f(jx, ix) = _self[jx]->f();
@@ -358,12 +421,12 @@ Returns:
             }
             return py::make_tuple(f, vu);
           },
-          py::arg("epoch"), R"__doc__(
+          py::arg("dates"), R"__doc__(
 Compute nodal modulations for amplitude and phase.
 
 Args:
-  epoch (numpy.ndarray): Desired UTC time expressed in number of seconds
-    elapsed since 1970-01-01T00:00:00
+  dates (numpy.ndarray): Desired UTC time. The array must be one-dimensional
+  and of type :py:class:`numpy.datetime64`.
 Returns:
   tuple: the nodal correction for amplitude, v (greenwich argument) + u
   (nodal correction for phase)
@@ -380,16 +443,18 @@ Returns:
           py::arg("ident"), "Gets the wave properties")
       .def(
           "tide_from_tide_series",
-          [](WaveTable& self, const Eigen::Ref<const Eigen::VectorXd>& epoch,
+          [](WaveTable& self, py::array& dates,
              const Eigen::Ref<const Eigen::VectorXcd>& wave)
               -> py::array_t<double> {
-            return tide_from_time_series(self, epoch, wave);
+            return tide_from_time_series(self, npdatetime64_to_epoch(dates),
+                                         wave);
           },
-          py::arg("epoch"), py::arg("wave"), R"__doc__(
+          py::arg("dates"), py::arg("wave"), R"__doc__(
 Calculates the tide of a given time series.
 
 Args:
-  epoch (numpy.ndarray): Time series dates.
+  dates (numpy.ndarray): UTC dates. The array must be one-dimensional and of
+    type :py:class:`numpy.datetime64`.
   wave (numpy.ndarray): Tidal wave properties.
 
 Return:
@@ -397,16 +462,16 @@ Return:
 )__doc__")
       .def(
           "tide_from_mapping",
-          [](WaveTable& self, const double epoch,
+          [](WaveTable& self, py::handle& date,
              const Eigen::Ref<const Eigen::MatrixXcd>& wave)
               -> py::array_t<double> {
-            return tide_from_mapping(self, epoch, wave);
+            return tide_from_mapping(self, timestamp(date), wave);
           },
-          py::arg("epoch"), py::arg("wave"), R"__doc__(
+          py::arg("date"), py::arg("wave"), R"__doc__(
 Calculates the tide for a given tidal wave mapping.
 
 Args:
-  epoch (float): Mapping date
+  date (datetime.datetime): Mapping date
   wave (numpy.ndarray): A matrix containing the wave properties for each point
     on the map.
 

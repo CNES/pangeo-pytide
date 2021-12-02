@@ -14,8 +14,7 @@ from pytide import core
 
 class AstronomicAngle(unittest.TestCase):
     def test_init(self):
-        aa = core.AstronomicAngle(core.timestamp(datetime.datetime(2000, 1,
-                                                                   1)))
+        aa = core.AstronomicAngle(datetime.datetime(2000, 1, 1))
         self.assertTrue(isinstance(aa, core.AstronomicAngle))
         self.assertAlmostEqual(aa.h, 4.886452089967941, delta=1e-6)
         self.assertAlmostEqual(aa.n, 2.182860931126595, delta=1e-6)
@@ -60,8 +59,7 @@ class WaveTable(unittest.TestCase):
                              sorted(["M2", "K1", "O1", "P1", "Q1", "S1"]))
 
     def test_wave(self):
-        aa = core.AstronomicAngle(core.timestamp(datetime.datetime(2000, 1,
-                                                                   1)))
+        aa = core.AstronomicAngle(datetime.datetime(2000, 1, 1))
         wt = core.WaveTable(["M2"])
         wave = wt.wave("M2")
         self.assertAlmostEqual(wave.freq * 86400,
@@ -71,7 +69,7 @@ class WaveTable(unittest.TestCase):
 
     def test_analysis(self):
         with netCDF4.Dataset(self.DATASET) as dataset:
-            time = dataset['time'][:] * 1e-6
+            time = dataset['time'][:].astype("datetime64[us]")
             h = dataset['ocean'][:] * 1e-2
 
         wt = core.WaveTable()
@@ -92,7 +90,7 @@ class WaveTable(unittest.TestCase):
 
     def test_reentering(self):
         with netCDF4.Dataset(self.DATASET) as dataset:
-            time = dataset['time'][:4096] * 1e-6
+            time = dataset['time'][:4096].astype("datetime64[us]")
             h = dataset['ocean'][:4096] * 1e-2
 
         wt = core.WaveTable()

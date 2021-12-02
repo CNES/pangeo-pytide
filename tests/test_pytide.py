@@ -85,7 +85,7 @@ class WaveTable(unittest.TestCase):
         with self.assertRaises(TypeError):
             wt.compute_nodal_modulations(datetime.datetime(2012, 1, 1))
 
-        with self.assertRaises(TypeError):
+        with self.assertRaises(ValueError):
             wt.compute_nodal_modulations(time)
 
         with self.assertRaises(TypeError):
@@ -96,7 +96,7 @@ class WaveTable(unittest.TestCase):
 
     def test_analysis(self):
         with netCDF4.Dataset(self.DATASET) as dataset:
-            time = (dataset['time'][:] * 1e-6).astype("datetime64[s]")
+            time = dataset['time'][:].astype("datetime64[us]")
             h = dataset['ocean'][:] * 1e-2
 
         wt = pytide.WaveTable()

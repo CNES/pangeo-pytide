@@ -6,9 +6,18 @@
 Tidal constituents analysis
 ###########################
 """
-from typing import List, Optional, Tuple, Union
+from typing import Dict, Iterator, List, Optional, Tuple, Union
 import datetime
 import numpy
+try:
+    import numpy.typing
+    NDArrayDateTime64 = numpy.typing.NDArray[numpy.datetime64]
+    NDArrayComplex128 = numpy.typing.NDArray[numpy.complex128]
+    NDArrayFloat64 = numpy.typing.NDArray[numpy.float64]
+except ImportError:
+    NDArrayDateTime64 = numpy.ndarray
+    NDArrayComplex128 = numpy.ndarray
+    NDArrayFloat64 = numpy.ndarray
 from . import core
 from . import version
 
@@ -22,11 +31,6 @@ class AstronomicAngle(core.AstronomicAngle):
     Args:
         date (datetime.datetime, optional): Desired UTC time
     """
-    def __init__(self, date: Optional[datetime.datetime] = None):
-        if date is None:
-            super().__init__()
-        else:
-            super().__init__(core.timestamp(date))
 
 
 class Wave(core.Wave):
@@ -35,7 +39,7 @@ class Wave(core.Wave):
 
 class WaveTable(core.WaveTable):
     """Properties of tidal constituents"""
-    def __repr__(self):
+    def __repr__(self) -> str:
         constituents = self.constituents()
         if len(constituents) > 9:
             constituents = constituents[:4] + ["..."] + constituents[-4:]
@@ -43,7 +47,7 @@ class WaveTable(core.WaveTable):
         return "%s.%s(%s)" % (self.__class__.__module__,
                               self.__class__.__name__, ', '.join(constituents))
 
-    def freq(self) -> numpy.ndarray:
+    def freq(self) -> NDArrayFloat64:
         """Gets the waves frequencies in radians per seconds"""
         return numpy.array([wave.freq for wave in self], dtype=numpy.float64)
 
@@ -51,8 +55,8 @@ class WaveTable(core.WaveTable):
         """Gets the wave constituents handled by this instance"""
         return [wave.name() for wave in self]
 
-    def compute_nodal_corrections(self, date: datetime.datetime
-                                  ) -> core.AstronomicAngle:
+    def compute_nodal_corrections(
+            self, date: datetime.datetime) -> core.AstronomicAngle:
         """Compute nodal corrections.
 
         Args:
@@ -62,11 +66,11 @@ class WaveTable(core.WaveTable):
             core.AstronomicAngle: The astronomic angle, indicating the date on
             which the tide is to be calculated.
         """
-        return super().compute_nodal_corrections(core.timestamp(date))
+        return super().compute_nodal_corrections(date)
 
     def compute_nodal_modulations(
-            self, dates: Union[List[datetime.datetime], numpy.ndarray]
-    ) -> Tuple[numpy.ndarray, numpy.ndarray]:
+        self, dates: Union[List[datetime.datetime], NDArrayDateTime64]
+    ) -> Tuple[NDArrayFloat64, NDArrayFloat64]:
         """Compute nodal modulations for amplitude and phase.
 
         Args:
@@ -78,19 +82,17 @@ class WaveTable(core.WaveTable):
         """
         if isinstance(dates, list) and all(
                 isinstance(item, datetime.datetime) for item in dates):
-            epoch = [core.timestamp(item) for item in dates]
-        elif isinstance(dates, numpy.ndarray):
-            if not numpy.issubdtype(dates.dtype, numpy.datetime64):
-                raise TypeError("dates has wrong datetime unit, expected "
-                                "datetime64, got " + str(dates.dtype))
-            epoch = dates.astype("datetime64[s]").astype("float64")
-        else:
-            raise TypeError("unexpected type for dates: " +
-                            type(dates).__name__)
-        return super().compute_nodal_modulations(epoch)
+            epoch = numpy.array([core.timestamp(item) for item in dates]) * 1e6
+            return super().compute_nodal_modulations(
+                epoch.astype("datetime64[us]"))
+        # The method throws an error if the dates are not datetime64
+        return super().compute_nodal_modulations(dates)  # type: ignore
 
     @staticmethod
-    def harmonic_analysis(h, f, vu, dtype=None):
+    def harmonic_analysis(h: NDArrayFloat64,
+                          f: NDArrayFloat64,
+                          vu: NDArrayFloat64,
+                          dtype=None) -> NDArrayComplex128:
         """Harmonic Analysis
 
         The harmonic analysis method consists in expressing the ocean tidal
@@ -151,7 +153,7 @@ class WaveTable(core.WaveTable):
         return core.WaveTable.harmonic_analysis(h, f, vu).astype(dtype)
 
     @staticmethod
-    def select_waves_for_analysis(duration, n_periods=2):
+    def select_waves_for_analysis(duration, n_periods=2) -> Iterator[str]:
         """Returns the list of tidal waves such that their period is more than
         twice the duration of the time series analyzed.
         """
@@ -168,7 +170,11 @@ class WaveDict(WaveTable):
         """Gets the waves frequencies in radians per seconds"""
         return {wave.name(): wave.freq for wave in self}
 
-    def harmonic_analysis(self, h, f, vu, dtype=None):
+    def harmonic_analysis(self,
+                          h: NDArrayFloat64,
+                          f: NDArrayFloat64,
+                          vu: NDArrayFloat64,
+                          dtype=None) -> Dict[str, NDArrayComplex128]:
         """Harmonic Analysis
 
         Args:
@@ -194,11 +200,13 @@ class WaveDict(WaveTable):
             for constituent, coefficient in zip(self.constituents(), analysis)
         }
 
-    def tide_from_tide_series(self, epoch, wave):
+    def tide_from_tide_series(
+            self, dates: NDArrayDateTime64,
+            wave: Dict[str, numpy.complex128]) -> NDArrayFloat64:
         """Calculates the tide of a given time series.
 
         Args:
-            epoch (numpy.ndarray): time series data
+            dates (numpy.ndarray): time series data
             wave (dict): Tidal wave properties.
 
         Returns:
@@ -207,5 +215,5 @@ class WaveDict(WaveTable):
         if len(wave) != len(self):
             raise ValueError("wave must contain as many items as tidal "
                              "constituents loaded")
-        wave_properties = [wave[item] for item in self]
-        return super().tide_from_tide_series(epoch, wave_properties)
+        wave_properties = numpy.array([wave[item] for item in self])
+        return super().tide_from_tide_series(dates, wave_properties)
