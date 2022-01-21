@@ -6,15 +6,19 @@
 Tidal constituents analysis
 ###########################
 """
-from typing import Dict, Iterator, List, Optional, Tuple, Union
+from typing import Dict, Iterator, List, Tuple, TYPE_CHECKING, Union
 import datetime
+import distutils.version
+import sys
 import numpy
-try:
+if TYPE_CHECKING and distutils.version.LooseVersion(
+        numpy.__version__) >= distutils.version.LooseVersion(
+            "1.20") and sys.version_info >= (3, 9):
     import numpy.typing
     NDArrayDateTime64 = numpy.typing.NDArray[numpy.datetime64]
     NDArrayComplex128 = numpy.typing.NDArray[numpy.complex128]
     NDArrayFloat64 = numpy.typing.NDArray[numpy.float64]
-except ImportError:
+else:
     NDArrayDateTime64 = numpy.ndarray
     NDArrayComplex128 = numpy.ndarray
     NDArrayFloat64 = numpy.ndarray
