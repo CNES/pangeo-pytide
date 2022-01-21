@@ -5,6 +5,7 @@
 # BSD-style license that can be found in the LICENSE file.
 """This script is the entry point for building, distributing and installing
 this module using distutils/setuptools."""
+from typing import ClassVar, Optional
 import datetime
 import os
 import pathlib
@@ -46,7 +47,9 @@ def execute(cmd):
                                shell=True,
                                stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE)
-    return process.stdout.read().decode()
+    stream = process.stdout
+    assert stream is not None
+    return stream.read().decode()
 
 
 def update_meta(path, version):
@@ -149,16 +152,19 @@ class BuildExt(setuptools.command.build_ext.build_ext):
     """Build the Python extension using cmake"""
 
     #: Preferred C++ compiler
-    CXX_COMPILER = None
+    CXX_COMPILER: ClassVar[Optional[str]] = None
 
     #: Preferred Eigen root
-    EIGEN3_INCLUDE_DIR = None
+    EIGEN3_INCLUDE_DIR: ClassVar[Optional[str]] = None
+
+    #: Selected CMAKE generator
+    GENERATOR: ClassVar[Optional[str]] = None
 
     #: Preferred MKL root
-    MKL_ROOT = None
+    MKL_ROOT: ClassVar[Optional[str]] = None
 
     #: Run CMake to configure this project
-    RECONFIGURE = None
+    RECONFIGURE: ClassVar[Optional[bool]] = None
 
     def run(self):
         """A command's raison d'etre: carry out the action"""
@@ -250,23 +256,29 @@ class BuildExt(setuptools.command.build_ext.build_ext):
 
         build_args = ['--config', cfg]
 
-        if platform.system() != 'Windows':
-            build_args += ['--', '-j%d' % os.cpu_count()]
-            cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
-            if platform.system() == 'Darwin':
-                cmake_args += ['-DCMAKE_OSX_DEPLOYMENT_TARGET=10.14']
-        else:
+        is_windows = platform.system() == "Windows"
+
+        if self.GENERATOR is not None:
+            cmake_args.append("-G" + self.GENERATOR)
+        elif is_windows:
+            cmake_args.append("-G" + 'Visual Studio 16 2019')
+
+        if is_windows:
             cmake_args += [
-                '-G', 'Visual Studio 15 2017',
                 '-DCMAKE_GENERATOR_PLATFORM=x64',
                 '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}'.format(
                     cfg.upper(), extdir)
             ]
             build_args += ['--', '/m']
-            if self.verbose:
+            if self.verbose:  # type: ignore
                 build_args += ['/verbosity:n']
+        else:
+            build_args += ['--', '-j%d' % os.cpu_count()]
+            cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
+            if platform.system() == 'Darwin':
+                cmake_args += ['-DCMAKE_OSX_DEPLOYMENT_TARGET=10.14']
 
-        if self.verbose:
+        if self.verbose:  # type: ignore
             build_args.insert(0, "--verbose")
 
         os.chdir(str(build_temp))
@@ -281,7 +293,7 @@ class BuildExt(setuptools.command.build_ext.build_ext):
 
         if configure:
             self.spawn(['cmake', str(WORKING_DIRECTORY)] + cmake_args)
-        if not self.dry_run:
+        if not self.dry_run:  # type: ignore
             self.spawn(['cmake', '--build', '.', '--target', 'core'] +
                        build_args)
         os.chdir(str(WORKING_DIRECTORY))
@@ -291,8 +303,9 @@ class Build(distutils.command.build.build):
     """Build everything needed to install"""
     user_options = distutils.command.build.build.user_options
     user_options += [
-        ('eigen-root=', None, 'Preferred Eigen3 include directory'),
         ('cxx-compiler=', None, 'Preferred C++ compiler'),
+        ('eigen-root=', None, 'Preferred Eigen3 include directory'),
+        ('generator=', None, 'Selected CMake generator'),
         ('mkl-root=', None, 'Preferred MKL installation prefix'),
         ('reconfigure', None, 'Forces CMake to reconfigure this project')
     ]
@@ -302,6 +315,7 @@ class Build(distutils.command.build.build):
         super().initialize_options()
         self.cxx_compiler = None
         self.eigen_root = None
+        self.generator = None
         self.mkl_root = None
         self.reconfigure = None
 
@@ -311,42 +325,45 @@ class Build(distutils.command.build.build):
             BuildExt.CXX_COMPILER = self.cxx_compiler
         if self.eigen_root is not None:
             BuildExt.EIGEN3_INCLUDE_DIR = self.eigen_root
+        if self.generator is not None:
+            BuildExt.GENERATOR = self.generator
         if self.reconfigure is not None:
             BuildExt.RECONFIGURE = True
         super().run()
 
 
 def main():
-    setuptools.setup(name='pytide',
-                     version=revision(),
-                     classifiers=[
-                         "Development Status :: 3 - Alpha",
-                         "Topic :: Scientific/Engineering :: Physics",
-                         "License :: OSI Approved :: BSD License",
-                         "Natural Language :: English",
-                         "Operating System :: POSIX",
-                         "Operating System :: MacOS",
-                         "Operating System :: Microsoft :: Windows",
-                         "Programming Language :: Python :: 3.6",
-                         "Programming Language :: Python :: 3.7",
-                         "Programming Language :: Python :: 3.8"
-                     ],
-                     description='Tidal constituents analysis in Python.',
-                     url='https://github.com/CNES/pangeo-pytide',
-                     author='CNES/CLS',
-                     license="BSD License",
-                     ext_modules=[CMakeExtension(name="pytide.core")],
-                     setup_requires=[],
-                     scripts=["src/scripts/mit_gcm_detiding.py"],
-                     install_requires=["numpy"],
-                     tests_require=["netCDF4", "numpy"],
-                     package_dir={'': 'src'},
-                     packages=setuptools.find_packages(where="src"),
-                     cmdclass={
-                         'build': Build,
-                         'build_ext': BuildExt
-                     },
-                     zip_safe=False)
+    setuptools.setup(
+        name='pytide',
+        version=revision(),
+        classifiers=[
+            "Development Status :: 3 - Stable",
+            "Topic :: Scientific/Engineering :: Physics",
+            "License :: OSI Approved :: BSD License",
+            "Natural Language :: English", "Operating System :: POSIX",
+            "Operating System :: MacOS",
+            "Operating System :: Microsoft :: Windows",
+            "Programming Language :: Python :: 3.6",
+            "Programming Language :: Python :: 3.7",
+            "Programming Language :: Python :: 3.8",
+            "Programming Language :: Python :: 3.9",
+        ],
+        description='Tidal constituents analysis in Python.',
+        url='https://github.com/CNES/pangeo-pytide',
+        author='CNES/CLS',
+        license="BSD License",
+        ext_modules=[CMakeExtension(name="pytide.core")],
+        setup_requires=[],
+        scripts=["src/scripts/mit_gcm_detiding.py"],
+        install_requires=["numpy"],
+        tests_require=["netCDF4", "numpy"],
+        package_dir={'': 'src'},
+        packages=setuptools.find_packages(where="src"),
+        cmdclass={
+            'build': Build,
+            'build_ext': BuildExt
+        },  # type: ignore
+        zip_safe=False)
 
 
 if __name__ == "__main__":
