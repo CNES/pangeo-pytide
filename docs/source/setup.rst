@@ -18,13 +18,16 @@ C++, you must have Python 3, at least Python version 3.6, a C++ compiler and
 The compiling C++ requires the following development library:
 
 
+    * `MKL <https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html>`_
     * `Eigen3 <http://eigen.tuxfamily.org/>`_
 
 You can install these packages on Ubuntu by typing the following command:
 
 .. code-block:: bash
 
-    sudo apt-get install g++ cmake libeigen3-dev
+    sudo apt-add-repository multiverse && sudo apt-get update # MKL is in the multiverse repo.
+    sudo apt-get install g++ cmake libeigen3-dev libmkl-dev
+
 
 You need, also, to install Python libraries before configuring and installing
 this software:
@@ -47,6 +50,7 @@ You can specify, among other things, the following options:
 
     * ``--debug`` to compile the C++ library in Debug mode,
     * ``--eigen-root`` to specify the Eigen3 include directory.
+    * ``--mkl-root`` to specify the MKL root
     * ``--cxx-compiler`` to select the C++ compiler to use
 
 Run the ``python setup.py build --help`` command to view all the options
