@@ -5,7 +5,7 @@
 # BSD-style license that can be found in the LICENSE file.
 """This script is the entry point for building, distributing and installing
 this module using distutils/setuptools."""
-from typing import ClassVar, Optional
+from typing import ClassVar, List, Optional
 import datetime
 import os
 import pathlib
@@ -238,64 +238,82 @@ class BuildExt(setuptools.command.build_ext.build_ext):
 
         return result
 
-    def build_cmake(self, ext):
-        """Execute cmake to build the Python extension"""
-        # These dirs will be created in build_py, so if you don't have
-        # any python sources to bundle, the dirs will be missing
-        build_temp = pathlib.Path(WORKING_DIRECTORY, self.build_temp)
-        build_temp.mkdir(parents=True, exist_ok=True)
-        extdir = build_dirname(ext.name)
+    def get_cmake_args(self, cfg: str, extdir: str) -> List[str]:
+        """build cmake arguments.
 
-        cfg = 'Debug' if self.debug else 'Release'
-
+        # Args:
+        * `cfg`: config, one of {"debug", "release"}
+        * `extdir`: output directory.
+        """
         cmake_args = [
             "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=" + str(extdir),
             "-DPYTHON_EXECUTABLE=" + sys.executable,
-            "-DCMAKE_PREFIX_PATH=" + sys.prefix
+            "-DCMAKE_PREFIX_PATH=" + sys.prefix,
         ] + self.set_cmake_user_options()
-
-        build_args = ['--config', cfg]
 
         is_windows = platform.system() == "Windows"
 
         if self.GENERATOR is not None:
             cmake_args.append("-G" + self.GENERATOR)
         elif is_windows:
-            cmake_args.append("-G" + 'Visual Studio 16 2019')
+            cmake_args.append("-G" + "Visual Studio 16 2019")
 
         if is_windows:
             cmake_args += [
-                '-DCMAKE_GENERATOR_PLATFORM=x64',
-                '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}'.format(
-                    cfg.upper(), extdir)
+                "-DCMAKE_GENERATOR_PLATFORM=x64",
+                "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}".format(cfg.upper(), extdir),
             ]
-            build_args += ['--', '/m']
-            if self.verbose:  # type: ignore
-                build_args += ['/verbosity:n']
         else:
-            build_args += ['--', '-j%d' % os.cpu_count()]
-            cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
-            if platform.system() == 'Darwin':
-                cmake_args += ['-DCMAKE_OSX_DEPLOYMENT_TARGET=10.14']
+            cmake_args += ["-DCMAKE_BUILD_TYPE=" + cfg]
+            if platform.system() == "Darwin":
+                cmake_args += ["-DCMAKE_OSX_DEPLOYMENT_TARGET=10.14"]
+        return cmake_args
 
+    def get_build_args(self, cfg: str) -> List[str]:
+        """make compiler build arguments.
+
+        # Args:
+        * `cfg`: config, one of {"debug", "release"}
+        """
+        build_args = ["--config", cfg]
+        is_windows = platform.system() == "windows"
+        if is_windows:
+            if self.verbose:  # type: ignore
+                build_args += ["/verbosity:n"]
+        else:
+            build_args += ["--", "-j%d" % os.cpu_count()]
         if self.verbose:  # type: ignore
             build_args.insert(0, "--verbose")
+        return build_args
+
+
+    def build_cmake(self, ext):
+        """execute cmake to build the python extension"""
+        # these dirs will be created in build_py, so if you don't have
+        # any python sources to bundle, the dirs will be missing
+        build_temp = pathlib.Path(WORKING_DIRECTORY, self.build_temp)
+        build_temp.mkdir(parents=True, exist_ok=True)
+        extdir = build_dirname(ext.name)
+
+        cfg = "debug" if self.debug else "release"
 
         os.chdir(str(build_temp))
 
         # Has CMake ever been executed?
         if pathlib.Path(build_temp, "CMakeFiles",
-                        "TargetDirectories.txt").exists():
+                "TargetDirectories.txt").exists():
             # The user must force the reconfiguration
             configure = self.RECONFIGURE is not None
         else:
             configure = True
 
         if configure:
-            self.spawn(['cmake', str(WORKING_DIRECTORY)] + cmake_args)
+            cmake_args = self.get_cmake_args(cfg, extdir)
+            self.spawn(["cmake", str(WORKING_DIRECTORY)] + cmake_args)
         if not self.dry_run:  # type: ignore
-            self.spawn(['cmake', '--build', '.', '--target', 'core'] +
-                       build_args)
+            build_args = self.get_build_args(cfg)
+            self.spawn(["cmake", "--build", ".", "--target", "core"] +
+                build_args)
         os.chdir(str(WORKING_DIRECTORY))
 
 
@@ -323,6 +341,8 @@ class Build(distutils.command.build.build):
         """A command's raison d'etre: carry out the action"""
         if self.cxx_compiler is not None:
             BuildExt.CXX_COMPILER = self.cxx_compiler
+        if self.mkl_root is not None:
+            BuildExt.MKL_ROOT = self.mkl_root
         if self.eigen_root is not None:
             BuildExt.EIGEN3_INCLUDE_DIR = self.eigen_root
         if self.generator is not None:
