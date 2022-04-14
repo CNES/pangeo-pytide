@@ -113,16 +113,8 @@ if(NOT POW_FUNCTION_EXISTS)
 endif()
 
 # Python
-find_package(PythonInterp REQUIRED)
-execute_process(
-  COMMAND
-    ${PYTHON_EXECUTABLE} -c [=[import os
-import sysconfig
-import sys
-sys.stdout.write(os.path.dirname(sysconfig.get_config_h_filename()))
-]=]
-  OUTPUT_VARIABLE PYTHON_INCLUDE_DIR)
-find_package(PythonLibs REQUIRED)
+find_package(Python COMPONENTS Interpreter Development)
+include_directories(${Python_INCLUDE_DIRS})
 
 # Eigen3
 find_package(Eigen3 3.3.1 REQUIRED)

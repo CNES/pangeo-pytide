@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2020 CNES
+# Copyright (c) 2022 CNES
 #
 # All rights reserved. Use of this source code is governed by a
 # BSD-style license that can be found in the LICENSE file.
@@ -35,10 +35,15 @@ WORKING_DIRECTORY = pathlib.Path(__file__).parent.absolute()
 def build_dirname(extname=None):
     """Returns the name of the build directory."""
     extname = '' if extname is None else os.sep.join(extname.split(".")[:-1])
-    return str(
-        pathlib.Path(WORKING_DIRECTORY, "build",
-                     "lib.%s-%d.%d" % (sysconfig.get_platform(), MAJOR, MINOR),
-                     extname))
+    path = pathlib.Path(
+        WORKING_DIRECTORY, "build",
+        "lib.%s-%d.%d" % (sysconfig.get_platform(), MAJOR, MINOR), extname)
+    if path.exists():
+        return path
+    return pathlib.Path(
+        WORKING_DIRECTORY, "build",
+        "lib.%s-%s" % (sysconfig.get_platform(), sys.implementation.cache_tag),
+        extname)
 
 
 def execute(cmd):
@@ -122,7 +127,7 @@ def revision():
     # Finally, write the file containing the version number.
     with open(module, 'w') as handler:
         handler.write('''"""
-# Copyright (c) 2020 CNES
+# Copyright (c) 2022 CNES
 #
 # All rights reserved. Use of this source code is governed by a
 # BSD-style license that can be found in the LICENSE file.
@@ -296,9 +301,10 @@ class BuildExt(setuptools.command.build_ext.build_ext):
         # any python sources to bundle, the dirs will be missing
         build_temp = pathlib.Path(WORKING_DIRECTORY, self.build_temp)
         build_temp.mkdir(parents=True, exist_ok=True)
-        extdir = build_dirname(ext.name)
+        extdir = str(
+            pathlib.Path(self.get_ext_fullpath(ext.name)).parent.resolve())
 
-        cfg = "debug" if self.debug else "release"
+        cfg = 'Debug' if self.debug else 'Release'
 
         os.chdir(str(build_temp))
 
@@ -372,6 +378,7 @@ def main():
             "Programming Language :: Python :: 3.7",
             "Programming Language :: Python :: 3.8",
             "Programming Language :: Python :: 3.9",
+            "Programming Language :: Python :: 3.10",
         ],
         description='Tidal constituents analysis in Python.',
         url='https://github.com/CNES/pangeo-pytide',

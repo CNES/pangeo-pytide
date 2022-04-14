@@ -6,8 +6,8 @@ package:
   version: {{ version }}
 
 source:
-    git_url: https://github.com/CNES/pangeo-{{ name }}.git
-    git_rev: HEAD
+  git_url: https://github.com/CNES/pangeo-{{ name }}.git
+  git_rev: HEAD
 
 build:
   number: 0
@@ -20,6 +20,7 @@ requirements:
     - cmake
   host:
     - eigen
+    - mkl-devel
     - numpy
     - python
     - setuptools
@@ -27,6 +28,7 @@ requirements:
     - {{ pin_compatible('numpy') }}
     - python
     - numpy
+    - mkl  # [linux or win]
 
 test:
   imports:
