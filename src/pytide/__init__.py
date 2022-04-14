@@ -6,11 +6,13 @@
 Tidal constituents analysis
 ###########################
 """
-from typing import Dict, Iterator, List, Tuple, TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Dict, Iterator, List, Tuple, Union
 import datetime
 import distutils.version
 import sys
+
 import numpy
+
 if TYPE_CHECKING and distutils.version.LooseVersion(
         numpy.__version__) >= distutils.version.LooseVersion(
             "1.20") and sys.version_info >= (3, 9):
@@ -22,8 +24,7 @@ else:
     NDArrayDateTime64 = numpy.ndarray
     NDArrayComplex128 = numpy.ndarray
     NDArrayFloat64 = numpy.ndarray
-from . import core
-from . import version
+from . import core, version
 
 __version__ = version.release()
 __date__ = version.date()
@@ -38,11 +39,12 @@ class AstronomicAngle(core.AstronomicAngle):
 
 
 class Wave(core.Wave):
-    """Tidal wave properties"""
+    """Tidal wave properties."""
 
 
 class WaveTable(core.WaveTable):
-    """Properties of tidal constituents"""
+    """Properties of tidal constituents."""
+
     def __repr__(self) -> str:
         constituents = self.constituents()
         if len(constituents) > 9:
@@ -52,11 +54,11 @@ class WaveTable(core.WaveTable):
                               self.__class__.__name__, ', '.join(constituents))
 
     def freq(self) -> NDArrayFloat64:
-        """Gets the waves frequencies in radians per seconds"""
+        """Gets the waves frequencies in radians per seconds."""
         return numpy.array([wave.freq for wave in self], dtype=numpy.float64)
 
     def constituents(self) -> List[str]:
-        """Gets the wave constituents handled by this instance"""
+        """Gets the wave constituents handled by this instance."""
         return [wave.name() for wave in self]
 
     def compute_nodal_corrections(
@@ -97,7 +99,7 @@ class WaveTable(core.WaveTable):
                           f: NDArrayFloat64,
                           vu: NDArrayFloat64,
                           dtype=None) -> NDArrayComplex128:
-        """Harmonic Analysis
+        """Harmonic Analysis.
 
         The harmonic analysis method consists in expressing the ocean tidal
         variations as a sum of independent constituents accordingly to the
@@ -159,8 +161,7 @@ class WaveTable(core.WaveTable):
     @staticmethod
     def select_waves_for_analysis(duration, n_periods=2) -> Iterator[str]:
         """Returns the list of tidal waves such that their period is more than
-        twice the duration of the time series analyzed.
-        """
+        twice the duration of the time series analyzed."""
         self = core.WaveTable()
         for wave in self:
             period = (numpy.pi * 2) / wave.freq / 86400
@@ -170,8 +171,9 @@ class WaveTable(core.WaveTable):
 
 class WaveDict(WaveTable):
     """Manages the tidal wave table as a dictionary."""
+
     def freq(self):
-        """Gets the waves frequencies in radians per seconds"""
+        """Gets the waves frequencies in radians per seconds."""
         return {wave.name(): wave.freq for wave in self}
 
     def harmonic_analysis(self,
@@ -179,7 +181,7 @@ class WaveDict(WaveTable):
                           f: NDArrayFloat64,
                           vu: NDArrayFloat64,
                           dtype=None) -> Dict[str, NDArrayComplex128]:
-        """Harmonic Analysis
+        """Harmonic Analysis.
 
         Args:
             h (numpy.ndarray): Sea level.

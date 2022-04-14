@@ -16,7 +16,7 @@ AstronomicAngle::AstronomicAngle(const double epoch) {
   t_ =
       std::fmod(pi<double>() + two_pi<double>() * 36525 * jc, two_pi<double>());
 
-  // SCHUREMAN FORMULAE P. 162 (oder 2 is enough)
+  // SCHUREMAN FORMULAE P. 162 (order 2 is enough)
 
   // Longitude of moon's node (N)
   n_ = radians(normalize_angle(

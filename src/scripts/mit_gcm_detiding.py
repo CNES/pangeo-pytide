@@ -5,11 +5,13 @@ import math
 import os
 import pathlib
 import re
+
 import dask.array
 import dask.distributed
 import netCDF4
 import numpy
 import xarray
+
 import pytide
 
 # Pattern to decode the time contains in filenames
@@ -28,7 +30,7 @@ END_DATE = '2012-11-12'
 
 
 def t_axis(dirname):
-    """Get the time axis representing the time series"""
+    """Get the time axis representing the time series."""
     ds = xarray.open_zarr(dirname)
     return ds.dtime.values
 
@@ -134,14 +136,14 @@ def write_one_face(path, waves, face, variable):
 
 
 def load_faces(dirname, face, variable, period, chunk):
-    """Load a face from the time series"""
+    """Load a face from the time series."""
     ds = xarray.open_zarr(dirname)
     ds = ds.transpose("face", "j", "i", "time")
     return ds.isel(face=face, j=chunk, i=chunk, time=period)[variable].data
 
 
 def pretty_size(size):
-    """Display a size readable by a human"""
+    """Display a size readable by a human."""
     if size in [0, 1]:
         return f"{size} octet"
 
@@ -153,7 +155,7 @@ def pretty_size(size):
 
 
 def dask_array_properties(da):
-    """Display the dask array size handled"""
+    """Display the dask array size handled."""
     chunks_size = 1
     for item in da.chunks:
         chunks_size *= item[0]
@@ -165,7 +167,7 @@ def dask_array_properties(da):
 
 
 def dask_array_rechunk(da, nblocks, axis=2):
-    """TODO rechunk"""
+    """TODO rechunk."""
     chunks = []
     div = int(math.sqrt(nblocks))
     for index, item in enumerate(da.chunks):
@@ -174,7 +176,7 @@ def dask_array_rechunk(da, nblocks, axis=2):
 
 
 def _apply_along_axis(arr, func1d, func1d_axis, func1d_args, func1d_kwargs):
-    """Wrap apply_along_axis"""
+    """Wrap apply_along_axis."""
     return numpy.apply_along_axis(func1d, func1d_axis, arr, *func1d_args,
                                   **func1d_kwargs)
 
@@ -326,7 +328,7 @@ def usage():
 
 
 def setup_logging(filename):
-    """Setup the logging system"""
+    """Setup the logging system."""
     kwargs = dict(format='%(asctime)s: %(message)s', level=logging.INFO)
     if filename is not None:
         filename.close()

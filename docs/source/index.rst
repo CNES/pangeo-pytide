@@ -24,4 +24,3 @@ Welcome to pytide's documentation!
    :maxdepth: 1
 
    module
-

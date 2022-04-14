@@ -6,7 +6,9 @@
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+// clang-format off
 #include <datetime.h>
+// clang-format on
 
 #include "astronomic_angle.hpp"
 #include "wave.hpp"
@@ -20,21 +22,21 @@ namespace py = pybind11;
 static inline int64_t days_from_civil(int y, unsigned m, unsigned d) {
   y -= static_cast<int>(m <= 2);
   const auto era = (y >= 0 ? y : y - 399) / 400;
-  const auto yoe = static_cast<unsigned>(y - era * 400);            // [0, 399]
-  const auto doy = (153 * (m + (m > 2 ? -3 : 9)) + 2) / 5 + d - 1;  // [0, 365]
-  const auto doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;  // [0, 146096]
+  const auto yoe = static_cast<unsigned>(y - era * 400);           // [0, 399]
+  const auto doy = (153 * (m + (m > 2 ? -3 : 9)) + 2) / 5 + d - 1; // [0, 365]
+  const auto doe = yoe * 365 + yoe / 4 - yoe / 100 + doy; // [0, 146096]
   return era * 146097LL + static_cast<int64_t>(doe) - 719468LL;
 }
 
 /// Return POSIX timestamp as double
-double timestamp(py::handle& datetime) {
+double timestamp(py::handle &datetime) {
   if (!datetime) {
     throw std::invalid_argument(
         "a datetime.datetime is required (got type null)");
   }
 
   if (PyDateTime_Check(datetime.ptr())) {
-    if (reinterpret_cast<_PyDateTime_BaseTZInfo*>(datetime.ptr())->hastzinfo) {
+    if (reinterpret_cast<_PyDateTime_BaseTZInfo *>(datetime.ptr())->hastzinfo) {
       throw std::invalid_argument(
           "only the naive datetime object can be converted to timestamp");
     }
@@ -55,9 +57,10 @@ double timestamp(py::handle& datetime) {
 }
 
 /// Calculates the tide of a given time series.
-static py::array_t<double> tide_from_time_series(
-    WaveTable& self, const Eigen::Ref<const Eigen::VectorXd>& epoch,
-    const Eigen::Ref<const Eigen::VectorXcd>& wave) {
+static py::array_t<double>
+tide_from_time_series(WaveTable &self,
+                      const Eigen::Ref<const Eigen::VectorXd> &epoch,
+                      const Eigen::Ref<const Eigen::VectorXcd> &wave) {
   if (static_cast<size_t>(wave.rows()) != self.size()) {
     throw std::invalid_argument(
         "wave must contain as many items as tidal constituents loaded");
@@ -77,7 +80,7 @@ static py::array_t<double> tide_from_time_series(
       _self.compute_nodal_corrections(epoch(ix));
 
       for (size_t jx = 0; jx < _self.size(); ++jx) {
-        const auto& item = _self[jx];
+        const auto &item = _self[jx];
         double phi = item->vu();
 
         tide += item->f() * (wave(jx).real() * std::cos(phi) +
@@ -89,7 +92,7 @@ static py::array_t<double> tide_from_time_series(
   return result;
 }
 
-static auto npdatetime64_scale(const py::dtype& dtype) -> double {
+static auto npdatetime64_scale(const py::dtype &dtype) -> double {
   auto type_num = py::detail::array_descriptor_proxy(dtype.ptr())->type_num;
   if (type_num != 21 /* NPY_DATETIME */) {
     throw std::invalid_argument(
@@ -133,7 +136,7 @@ static auto npdatetime64_scale(const py::dtype& dtype) -> double {
       units);
 }
 
-static auto npdatetime64_to_epoch(const py::array& array) -> Eigen::VectorXd {
+static auto npdatetime64_to_epoch(const py::array &array) -> Eigen::VectorXd {
   auto scale = npdatetime64_scale(array.dtype());
   auto _array = array.unchecked<int64_t, 1>();
   auto result = Eigen::VectorXd(_array.size());
@@ -148,9 +151,9 @@ static auto npdatetime64_to_epoch(const py::array& array) -> Eigen::VectorXd {
 
 /// Calculates the tide for a given date from a grid describing the properties
 /// of tidal waves over an area of interest.
-static py::array_t<double> tide_from_mapping(
-    WaveTable& self, const double epoch,
-    const Eigen::Ref<const Eigen::MatrixXcd>& wave) {
+static py::array_t<double>
+tide_from_mapping(WaveTable &self, const double epoch,
+                  const Eigen::Ref<const Eigen::MatrixXcd> &wave) {
   if (static_cast<size_t>(wave.rows()) != self.size()) {
     throw std::invalid_argument(
         "the first dimension of wave must contain as many items as "
@@ -169,7 +172,7 @@ static py::array_t<double> tide_from_mapping(
     for (py::ssize_t ix = 0; ix < wave.cols(); ++ix) {
       double tide = 0;
       for (size_t jx = 0; jx < _self.size(); ++jx) {
-        const auto& item = _self[jx];
+        const auto &item = _self[jx];
         double phi = item->vu();
 
         tide += item->f() * (wave(jx, ix).real() * std::cos(phi) +
@@ -182,7 +185,7 @@ static py::array_t<double> tide_from_mapping(
 }
 
 /// Get a tuple that fully encodes the state of this instance
-static auto wt_getstate(const WaveTable& self) -> py::tuple {
+static auto wt_getstate(const WaveTable &self) -> py::tuple {
   auto result = py::tuple(self.size());
   for (size_t ix = 0; ix < self.size(); ++ix) {
     result[ix] = self[ix]->name();
@@ -192,7 +195,7 @@ static auto wt_getstate(const WaveTable& self) -> py::tuple {
 
 /// Create a new instance from a registered state of an instance of this
 /// object.
-static auto wt_setstate(const pybind11::tuple& state) -> WaveTable {
+static auto wt_setstate(const pybind11::tuple &state) -> WaveTable {
   auto waves = std::vector<std::string>();
   waves.reserve(state.size());
   for (size_t ix = 0; ix < state.size(); ++ix) {
@@ -217,8 +220,8 @@ Core module
       py::arg("date"), "Return POSIX timestamp as float");
 
   py::class_<AstronomicAngle>(m, "AstronomicAngle")
-      .def(py::init([](py::handle& date) {
-             auto* ptr = date.is_none() ? new AstronomicAngle()
+      .def(py::init([](py::handle &date) {
+             auto *ptr = date.is_none() ? new AstronomicAngle()
                                         : new AstronomicAngle(timestamp(date));
              return std::unique_ptr<AstronomicAngle>(ptr);
            }),
@@ -374,7 +377,7 @@ Gets the wave name
                   "Gets the tidal waves known by this object")
       .def(
           "compute_nodal_corrections",
-          [](WaveTable& self, py::handle& date) -> AstronomicAngle {
+          [](WaveTable &self, py::handle &date) -> AstronomicAngle {
             auto epoch = timestamp(date);
             auto gil = py::gil_scoped_release();
             return self.compute_nodal_corrections(epoch);
@@ -390,7 +393,7 @@ Returns:
 )__doc__")
       .def(
           "compute_nodal_modulations",
-          [](WaveTable& self, py::array& dates) -> py::tuple {
+          [](WaveTable &self, py::array &dates) -> py::tuple {
             if (dates.ndim() != 1) {
               throw std::invalid_argument(
                   "dates must be a one-dimensional array");
@@ -433,18 +436,18 @@ Returns:
 )__doc__")
       .def(
           "wave",
-          [](const WaveTable& self, const Wave::Ident ident)
+          [](const WaveTable &self, const Wave::Ident ident)
               -> std::shared_ptr<Wave> { return self.wave(ident); },
           py::arg("ident"), "Gets the wave properties")
       .def(
           "wave",
-          [](const WaveTable& self, const std::string& ident)
+          [](const WaveTable &self, const std::string &ident)
               -> std::shared_ptr<Wave> { return self.wave(ident); },
           py::arg("ident"), "Gets the wave properties")
       .def(
           "tide_from_tide_series",
-          [](WaveTable& self, py::array& dates,
-             const Eigen::Ref<const Eigen::VectorXcd>& wave)
+          [](WaveTable &self, py::array &dates,
+             const Eigen::Ref<const Eigen::VectorXcd> &wave)
               -> py::array_t<double> {
             return tide_from_time_series(self, npdatetime64_to_epoch(dates),
                                          wave);
@@ -462,8 +465,8 @@ Return:
 )__doc__")
       .def(
           "tide_from_mapping",
-          [](WaveTable& self, py::handle& date,
-             const Eigen::Ref<const Eigen::MatrixXcd>& wave)
+          [](WaveTable &self, py::handle &date,
+             const Eigen::Ref<const Eigen::MatrixXcd> &wave)
               -> py::array_t<double> {
             return tide_from_mapping(self, timestamp(date), wave);
           },
@@ -480,9 +483,9 @@ Return:
 )__doc__")
       .def_static(
           "harmonic_analysis",
-          [](const Eigen::Ref<const Eigen::VectorXd>& h,
-             const Eigen::Ref<const Eigen::MatrixXd>& f,
-             const Eigen::Ref<const Eigen::MatrixXd>& vu) -> Eigen::VectorXcd {
+          [](const Eigen::Ref<const Eigen::VectorXd> &h,
+             const Eigen::Ref<const Eigen::MatrixXd> &f,
+             const Eigen::Ref<const Eigen::MatrixXd> &vu) -> Eigen::VectorXcd {
             py::gil_scoped_release release;
             return WaveTable::harmonic_analysis(h, f, vu);
           },
@@ -501,16 +504,16 @@ Returns:
   numpy.ndarray: The complex number representing the different reconstructed
   waves.
 )__doc__")
-      .def("__len__", [](const WaveTable& self) { return self.size(); })
+      .def("__len__", [](const WaveTable &self) { return self.size(); })
       .def(
           "__getitem__",
-          [](const WaveTable& self, size_t index) -> std::shared_ptr<Wave> {
+          [](const WaveTable &self, size_t index) -> std::shared_ptr<Wave> {
             return self[index];
           },
           py::arg("index"))
       .def(
           "__getitem__",
-          [](const WaveTable& self,
+          [](const WaveTable &self,
              py::slice slice) -> std::vector<std::shared_ptr<Wave>> {
             size_t start, stop, step, slicelength;
             if (!slice.compute(self.size(), &start, &stop, &step,
@@ -527,11 +530,11 @@ Returns:
           py::arg("slice"))
       .def(
           "__iter__",
-          [](const WaveTable& self) {
+          [](const WaveTable &self) {
             return py::make_iterator(self.begin(), self.end());
           },
           py::keep_alive<0, 1>())
       .def(py::pickle(
-          [](const WaveTable& self) { return wt_getstate(self); },
-          [](const py::tuple& state) { return wt_setstate(state); }));
+          [](const WaveTable &self) { return wt_getstate(self); },
+          [](const py::tuple &state) { return wt_setstate(state); }));
 }

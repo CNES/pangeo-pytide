@@ -7,12 +7,15 @@ import datetime
 import os
 import pickle
 import unittest
+
 import netCDF4
 import numpy
+
 from pytide import core
 
 
 class AstronomicAngle(unittest.TestCase):
+
     def test_init(self):
         aa = core.AstronomicAngle(datetime.datetime(2000, 1, 1))
         self.assertTrue(isinstance(aa, core.AstronomicAngle))
@@ -31,6 +34,7 @@ class AstronomicAngle(unittest.TestCase):
 
 
 class Wave(unittest.TestCase):
+
     def test_init(self):
         with self.assertRaises(TypeError):
             core.Wave()

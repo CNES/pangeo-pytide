@@ -2,149 +2,149 @@
 //
 // All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
-#include <Eigen/Dense>
-#include "astronomic_angle.hpp"
 #include "wave.hpp"
+#include "astronomic_angle.hpp"
 #include "math.hpp"
+#include <Eigen/Dense>
 
 std::string Wave::name() const {
   switch (ident_) {
-    case Wave::kO1:
-      return "O1";
-    case Wave::kP1:
-      return "P1";
-    case Wave::kK1:
-      return "K1";
-    case Wave::k2N2:
-      return "2N2";
-    case Wave::kMu2:
-      return "Mu2";
-    case Wave::kN2:
-      return "N2";
-    case Wave::kNu2:
-      return "Nu2";
-    case Wave::kM2:
-      return "M2";
-    case Wave::kL2:
-      return "L2";
-    case Wave::kT2:
-      return "T2";
-    case Wave::kS2:
-      return "S2";
-    case Wave::kK2:
-      return "K2";
-    case Wave::kM4:
-      return "M4";
-    case Wave::kS1:
-      return "S1";
-    case Wave::kQ1:
-      return "Q1";
-    case Wave::kMm:
-      return "Mm";
-    case Wave::kMf:
-      return "Mf";
-    case Wave::kMtm:
-      return "Mtm";
-    case Wave::kMsqm:
-      return "Msqm";
-    case Wave::kEps2:
-      return "Eps2";
-    case Wave::kLambda2:
-      return "Lambda2";
-    case Wave::kEta2:
-      return "Eta2";
-    case Wave::k2Q1:
-      return "2Q1";
-    case Wave::kSigma1:
-      return "Sigma1";
-    case Wave::kRho1:
-      return "Rho1";
-    case Wave::kM11:
-      return "M11";
-    case Wave::kM12:
-      return "M12";
-    case Wave::kChi1:
-      return "Chi1";
-    case Wave::kPi1:
-      return "Pi1";
-    case Wave::kPhi1:
-      return "Phi1";
-    case Wave::kTheta1:
-      return "Theta1";
-    case Wave::kJ1:
-      return "J1";
-    case Wave::kOO1:
-      return "OO1";
-    case Wave::kM3:
-      return "M3";
-    case Wave::kM6:
-      return "M6";
-    case Wave::kMN4:
-      return "MN4";
-    case Wave::kMS4:
-      return "MS4";
-    case Wave::kN4:
-      return "N4";
-    case Wave::kR2:
-      return "R2";
-    case Wave::kR4:
-      return "R4";
-    case Wave::kS4:
-      return "S4";
-    case Wave::kMNS2:
-      return "MNS2";
-    case Wave::kM13:
-      return "M13";
-    case Wave::kMK4:
-      return "MK4";
-    case Wave::kSN4:
-      return "SN4";
-    case Wave::kSK4:
-      return "SK4";
-    case Wave::k2MN6:
-      return "2MN6";
-    case Wave::k2MS6:
-      return "2MS6";
-    case Wave::k2MK6:
-      return "2MK6";
-    case Wave::kMSN6:
-      return "MSN6";
-    case Wave::k2SM6:
-      return "2SM6";
-    case Wave::kMSK6:
-      return "MSK6";
-    case Wave::kMP1:
-      return "MP1";
-    case Wave::k2SM2:
-      return "2SM2";
-    case Wave::kPsi1:
-      return "Psi1";
-    case Wave::k2MS2:
-      return "2MS2";
-    case Wave::kMKS2:
-      return "MKS2";
-    case Wave::k2MN2:
-      return "2MN2";
-    case Wave::kMSN2:
-      return "MSN2";
-    case Wave::kMO3:
-      return "MO3";
-    case Wave::k2MK3:
-      return "2MK3";
-    case Wave::kMK3:
-      return "MK3";
-    case Wave::kS6:
-      return "S6";
-    case Wave::kM8:
-      return "M8";
-    case Wave::kMSf:
-      return "MSf";
-    case Wave::kSsa:
-      return "Ssa";
-    case Wave::kSa:
-      return "Sa";
-    default:
-      return "unknown";
+  case Wave::kO1:
+    return "O1";
+  case Wave::kP1:
+    return "P1";
+  case Wave::kK1:
+    return "K1";
+  case Wave::k2N2:
+    return "2N2";
+  case Wave::kMu2:
+    return "Mu2";
+  case Wave::kN2:
+    return "N2";
+  case Wave::kNu2:
+    return "Nu2";
+  case Wave::kM2:
+    return "M2";
+  case Wave::kL2:
+    return "L2";
+  case Wave::kT2:
+    return "T2";
+  case Wave::kS2:
+    return "S2";
+  case Wave::kK2:
+    return "K2";
+  case Wave::kM4:
+    return "M4";
+  case Wave::kS1:
+    return "S1";
+  case Wave::kQ1:
+    return "Q1";
+  case Wave::kMm:
+    return "Mm";
+  case Wave::kMf:
+    return "Mf";
+  case Wave::kMtm:
+    return "Mtm";
+  case Wave::kMsqm:
+    return "Msqm";
+  case Wave::kEps2:
+    return "Eps2";
+  case Wave::kLambda2:
+    return "Lambda2";
+  case Wave::kEta2:
+    return "Eta2";
+  case Wave::k2Q1:
+    return "2Q1";
+  case Wave::kSigma1:
+    return "Sigma1";
+  case Wave::kRho1:
+    return "Rho1";
+  case Wave::kM11:
+    return "M11";
+  case Wave::kM12:
+    return "M12";
+  case Wave::kChi1:
+    return "Chi1";
+  case Wave::kPi1:
+    return "Pi1";
+  case Wave::kPhi1:
+    return "Phi1";
+  case Wave::kTheta1:
+    return "Theta1";
+  case Wave::kJ1:
+    return "J1";
+  case Wave::kOO1:
+    return "OO1";
+  case Wave::kM3:
+    return "M3";
+  case Wave::kM6:
+    return "M6";
+  case Wave::kMN4:
+    return "MN4";
+  case Wave::kMS4:
+    return "MS4";
+  case Wave::kN4:
+    return "N4";
+  case Wave::kR2:
+    return "R2";
+  case Wave::kR4:
+    return "R4";
+  case Wave::kS4:
+    return "S4";
+  case Wave::kMNS2:
+    return "MNS2";
+  case Wave::kM13:
+    return "M13";
+  case Wave::kMK4:
+    return "MK4";
+  case Wave::kSN4:
+    return "SN4";
+  case Wave::kSK4:
+    return "SK4";
+  case Wave::k2MN6:
+    return "2MN6";
+  case Wave::k2MS6:
+    return "2MS6";
+  case Wave::k2MK6:
+    return "2MK6";
+  case Wave::kMSN6:
+    return "MSN6";
+  case Wave::k2SM6:
+    return "2SM6";
+  case Wave::kMSK6:
+    return "MSK6";
+  case Wave::kMP1:
+    return "MP1";
+  case Wave::k2SM2:
+    return "2SM2";
+  case Wave::kPsi1:
+    return "Psi1";
+  case Wave::k2MS2:
+    return "2MS2";
+  case Wave::kMKS2:
+    return "MKS2";
+  case Wave::k2MN2:
+    return "2MN2";
+  case Wave::kMSN2:
+    return "MSN2";
+  case Wave::kMO3:
+    return "MO3";
+  case Wave::k2MK3:
+    return "2MK3";
+  case Wave::kMK3:
+    return "MK3";
+  case Wave::kS6:
+    return "S6";
+  case Wave::kM8:
+    return "M8";
+  case Wave::kMSf:
+    return "MSf";
+  case Wave::kSsa:
+    return "Ssa";
+  case Wave::kSa:
+    return "Sa";
+  default:
+    return "unknown";
   }
 }
 
@@ -160,7 +160,7 @@ std::vector<std::string> WaveTable::known_constituents() {
           "MSf",  "Ssa",  "Sa"};
 }
 
-static std::shared_ptr<Wave> wave_factory(const std::string& name) {
+static std::shared_ptr<Wave> wave_factory(const std::string &name) {
   if (name == "O1") {
     return std::shared_ptr<Wave>(new O1());
   } else if (name == "P1") {
@@ -300,14 +300,14 @@ static std::shared_ptr<Wave> wave_factory(const std::string& name) {
   throw std::runtime_error("The tidal wave is unknown: " + name);
 }
 
-WaveTable::WaveTable(const std::vector<std::string>& waves) {
-  const auto& wave_list = waves.empty() ? known_constituents() : waves;
-  for (auto& item : wave_list) {
+WaveTable::WaveTable(const std::vector<std::string> &waves) {
+  const auto &wave_list = waves.empty() ? known_constituents() : waves;
+  for (auto &item : wave_list) {
     waves_.emplace_back(wave_factory(item));
   }
 }
 
-void Wave::nodal_g(const AstronomicAngle& a) {
+void Wave::nodal_g(const AstronomicAngle &a) {
   v_ = argument_[0] * a.t() + argument_[1] * a.s() + argument_[2] * a.h() +
        argument_[3] * a.p() + argument_[5] * a.p1() +
        argument_[6] * pi_2<double>();
@@ -315,10 +315,10 @@ void Wave::nodal_g(const AstronomicAngle& a) {
        argument_[9] * a.nuprim() + argument_[10] * a.nusec();
 }
 
-Eigen::VectorXcd WaveTable::harmonic_analysis(
-    const Eigen::Ref<const Eigen::VectorXd>& h,
-    const Eigen::Ref<const Eigen::MatrixXd>& f,
-    const Eigen::Ref<const Eigen::MatrixXd>& vu) {
+Eigen::VectorXcd
+WaveTable::harmonic_analysis(const Eigen::Ref<const Eigen::VectorXd> &h,
+                             const Eigen::Ref<const Eigen::MatrixXd> &f,
+                             const Eigen::Ref<const Eigen::MatrixXd> &vu) {
   if (f.rows() != vu.rows() || f.cols() != vu.cols()) {
     throw std::invalid_argument(
         "f and vu could not be broadcast together with shape (" +

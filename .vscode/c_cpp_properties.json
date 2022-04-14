@@ -1,33 +1,33 @@
 {
-    "configurations": [
-        {
-            "name": "Linux",
-            "includePath": [
-                "${workspaceFolder}/**",
-                "/usr/include/eigen3",
-                "/home/fbriol/anaconda3/include/python3.7m",
-                "${workspaceFolder}/third_party/pybind11/include"
-            ],
-            "defines": [],
-            "compilerPath": "/usr/bin/clang",
-            "cStandard": "c11",
-            "cppStandard": "c++17",
-            "intelliSenseMode": "clang-x64"
-        },
-        {
-            "name": "OSX",
-            "includePath": [
-                "${workspaceFolder}/**",
-                "/Users/fbriol/anaconda3/include/eigen3",
-                "/Users/fbriol/anaconda3/include/python3.7m",
-                "${workspaceFolder}/third_party/pybind11/include"
-            ],
-            "defines": [],
-            "compilerPath": "/usr/bin/clang",
-            "cStandard": "c11",
-            "cppStandard": "c++17",
-            "intelliSenseMode": "clang-x64"
-        }
-    ],
-    "version": 4
+  "configurations": [
+    {
+      "name": "Linux",
+      "includePath": [
+        "${workspaceFolder}/**",
+        "/usr/include/eigen3",
+        "/home/fbriol/anaconda3/include/python3.7m",
+        "${workspaceFolder}/third_party/pybind11/include"
+      ],
+      "defines": [],
+      "compilerPath": "/usr/bin/clang",
+      "cStandard": "c11",
+      "cppStandard": "c++17",
+      "intelliSenseMode": "clang-x64"
+    },
+    {
+      "name": "OSX",
+      "includePath": [
+        "${workspaceFolder}/**",
+        "/Users/fbriol/anaconda3/include/eigen3",
+        "/Users/fbriol/anaconda3/include/python3.7m",
+        "${workspaceFolder}/third_party/pybind11/include"
+      ],
+      "defines": [],
+      "compilerPath": "/usr/bin/clang",
+      "cStandard": "c11",
+      "cppStandard": "c++17",
+      "intelliSenseMode": "clang-x64"
+    }
+  ],
+  "version": 4
 }

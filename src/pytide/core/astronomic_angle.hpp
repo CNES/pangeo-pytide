@@ -3,12 +3,12 @@
 // All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 #pragma once
-#include <limits>
 #include "math.hpp"
+#include <limits>
 
 /// Astronomical angles.
 class AstronomicAngle {
- protected:
+protected:
   /// Hour angle of mean sun.
   double t_;
   /// Longitude of moon's node
@@ -36,7 +36,7 @@ class AstronomicAngle {
   /// Term in argument of lunisolar constituent K₂
   double nusec_;
 
- public:
+public:
   /// Default constructor.
   AstronomicAngle() {
     t_ = n_ = h_ = s_ = p1_ = p_ = i_ = xi_ = nu_ = x1ra_ = r_ = nuprim_ =

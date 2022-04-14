@@ -4,14 +4,16 @@
 # BSD-style license that can be found in the LICENSE file.
 import datetime
 import os
-import numpy
 import unittest
+
 import netCDF4
 import numpy
+
 import pytide
 
 
 class AstronomicAngle(unittest.TestCase):
+
     def test_init(self):
         aa = pytide.AstronomicAngle(datetime.datetime(2000, 1, 1))
         self.assertTrue(isinstance(aa, pytide.AstronomicAngle))
@@ -30,6 +32,7 @@ class AstronomicAngle(unittest.TestCase):
 
 
 class Wave(unittest.TestCase):
+
     def test_init(self):
         with self.assertRaises(TypeError):
             pytide.Wave()

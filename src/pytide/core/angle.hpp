@@ -39,7 +39,7 @@ constexpr double p1() noexcept { return ((1.719 / julian_century)) * 3600; }
 /// @brief Compute the speed in degree by hour for the local mean lunar time (τ)
 constexpr double tau() noexcept { return 15.0 - s() + h(); }
 
-}  // namespace speed
+} // namespace speed
 
 namespace frequency {
 
@@ -67,4 +67,4 @@ constexpr double p1() noexcept { return 1.0 / ((15.0 / speed::p1()) * 24.0); }
 /// (τ)
 constexpr double tau() noexcept { return 1.0 / ((15.0 / speed::tau()) * 24.0); }
 
-}  // namespace frequency
+} // namespace frequency

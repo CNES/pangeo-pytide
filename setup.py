@@ -7,18 +7,19 @@
 this module using distutils/setuptools."""
 from typing import ClassVar, List, Optional
 import datetime
+# The setuptools must be imported before distutils
+import distutils.command.build
 import os
 import pathlib
 import platform
 import re
-import setuptools
-import setuptools.command.build_ext
-import setuptools.command.install
 import subprocess
 import sys
 import sysconfig
-# The setuptools must be imported before distutils
-import distutils.command.build
+
+import setuptools
+import setuptools.command.build_ext
+import setuptools.command.install
 
 # Check Python requirement
 MAJOR = sys.version_info[0]
@@ -32,7 +33,7 @@ WORKING_DIRECTORY = pathlib.Path(__file__).parent.absolute()
 
 
 def build_dirname(extname=None):
-    """Returns the name of the build directory"""
+    """Returns the name of the build directory."""
     extname = '' if extname is None else os.sep.join(extname.split(".")[:-1])
     return str(
         pathlib.Path(WORKING_DIRECTORY, "build",
@@ -42,7 +43,7 @@ def build_dirname(extname=None):
 
 def execute(cmd):
     """Executes a command and returns the lines displayed on the standard
-    output"""
+    output."""
     process = subprocess.Popen(cmd,
                                shell=True,
                                stdout=subprocess.PIPE,
@@ -68,7 +69,7 @@ def update_meta(path, version):
 
 
 def revision():
-    """Returns the software version"""
+    """Returns the software version."""
     os.chdir(WORKING_DIRECTORY)
     module = pathlib.Path(WORKING_DIRECTORY, 'src', 'pytide', 'version.py')
     stdout = execute("git describe --tags --dirty --long --always").strip()
@@ -143,13 +144,14 @@ def date() -> str:
 
 
 class CMakeExtension(setuptools.Extension):
-    """Python extension to build"""
+    """Python extension to build."""
+
     def __init__(self, name):
         super(CMakeExtension, self).__init__(name, sources=[])
 
 
 class BuildExt(setuptools.command.build_ext.build_ext):
-    """Build the Python extension using cmake"""
+    """Build the Python extension using cmake."""
 
     #: Preferred C++ compiler
     CXX_COMPILER: ClassVar[Optional[str]] = None
@@ -167,14 +169,14 @@ class BuildExt(setuptools.command.build_ext.build_ext):
     RECONFIGURE: ClassVar[Optional[bool]] = None
 
     def run(self):
-        """A command's raison d'etre: carry out the action"""
+        """Carry out the action."""
         for ext in self.extensions:
             self.build_cmake(ext)
         super().run()
 
     @staticmethod
     def eigen():
-        """Get the default Eigen3 path in Anaconda's environnement."""
+        """Get the default Eigen3 path in Anaconda's environment."""
         eigen_include_dir = pathlib.Path(sys.prefix, "include", "eigen3")
         if eigen_include_dir.exists():
             return "-DEIGEN3_INCLUDE_DIR=" + str(eigen_include_dir)
@@ -190,7 +192,7 @@ class BuildExt(setuptools.command.build_ext.build_ext):
 
     @staticmethod
     def mkl():
-        """Get the default MKL path in Anaconda's environnement."""
+        """Get the default MKL path in Anaconda's environment."""
         mkl_header = pathlib.Path(sys.prefix, "include", "mkl.h")
         if mkl_header.exists():
             os.environ["MKLROOT"] = sys.prefix
@@ -210,7 +212,8 @@ class BuildExt(setuptools.command.build_ext.build_ext):
         if not result:
             try:
                 # pylint: disable=unused-import
-                import conda
+                import conda  # noqa: F401
+
                 # pylint: enable=unused-import
             except ImportError:
                 result = False
@@ -261,7 +264,8 @@ class BuildExt(setuptools.command.build_ext.build_ext):
         if is_windows:
             cmake_args += [
                 "-DCMAKE_GENERATOR_PLATFORM=x64",
-                "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}".format(cfg.upper(), extdir),
+                "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}".format(
+                    cfg.upper(), extdir),
             ]
         else:
             cmake_args += ["-DCMAKE_BUILD_TYPE=" + cfg]
@@ -286,9 +290,8 @@ class BuildExt(setuptools.command.build_ext.build_ext):
             build_args.insert(0, "--verbose")
         return build_args
 
-
     def build_cmake(self, ext):
-        """execute cmake to build the python extension"""
+        """execute cmake to build the python extension."""
         # these dirs will be created in build_py, so if you don't have
         # any python sources to bundle, the dirs will be missing
         build_temp = pathlib.Path(WORKING_DIRECTORY, self.build_temp)
@@ -301,7 +304,7 @@ class BuildExt(setuptools.command.build_ext.build_ext):
 
         # Has CMake ever been executed?
         if pathlib.Path(build_temp, "CMakeFiles",
-                "TargetDirectories.txt").exists():
+                        "TargetDirectories.txt").exists():
             # The user must force the reconfiguration
             configure = self.RECONFIGURE is not None
         else:
@@ -313,12 +316,12 @@ class BuildExt(setuptools.command.build_ext.build_ext):
         if not self.dry_run:  # type: ignore
             build_args = self.get_build_args(cfg)
             self.spawn(["cmake", "--build", ".", "--target", "core"] +
-                build_args)
+                       build_args)
         os.chdir(str(WORKING_DIRECTORY))
 
 
 class Build(distutils.command.build.build):
-    """Build everything needed to install"""
+    """Build everything needed to install."""
     user_options = distutils.command.build.build.user_options
     user_options += [
         ('cxx-compiler=', None, 'Preferred C++ compiler'),
@@ -329,7 +332,8 @@ class Build(distutils.command.build.build):
     ]
 
     def initialize_options(self):
-        """Set default values for all the options that this command supports"""
+        """Set default values for all the options that this command
+        supports."""
         super().initialize_options()
         self.cxx_compiler = None
         self.eigen_root = None
@@ -338,7 +342,7 @@ class Build(distutils.command.build.build):
         self.reconfigure = None
 
     def run(self):
-        """A command's raison d'etre: carry out the action"""
+        """Carry out the action."""
         if self.cxx_compiler is not None:
             BuildExt.CXX_COMPILER = self.cxx_compiler
         if self.mkl_root is not None:
@@ -360,7 +364,8 @@ def main():
             "Development Status :: 3 - Stable",
             "Topic :: Scientific/Engineering :: Physics",
             "License :: OSI Approved :: BSD License",
-            "Natural Language :: English", "Operating System :: POSIX",
+            "Natural Language :: English",
+            "Operating System :: POSIX",
             "Operating System :: MacOS",
             "Operating System :: Microsoft :: Windows",
             "Programming Language :: Python :: 3.6",
