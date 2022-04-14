@@ -385,7 +385,7 @@ def main():
         name='pytide',
         version=revision(),
         classifiers=[
-            "Development Status :: 3 - Stable",
+            "Development Status :: 5 - Production/Stable",
             "Topic :: Scientific/Engineering :: Physics",
             "License :: OSI Approved :: BSD License",
             "Natural Language :: English",
