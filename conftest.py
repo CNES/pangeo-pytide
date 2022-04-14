@@ -28,6 +28,7 @@ def build_dirname(extname=None):
         "lib.%s-%s" % (sysconfig.get_platform(), sys.implementation.cache_tag),
         extname)
 
+
 def push_front_syspath():
     """Add the build directory to the front of sys.path."""
     sys.path.insert(0, str(build_dirname().resolve()))
