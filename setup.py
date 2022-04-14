@@ -77,13 +77,10 @@ def revision():
     """Returns the software version."""
     os.chdir(WORKING_DIRECTORY)
     module = pathlib.Path(WORKING_DIRECTORY, 'src', 'pytide', 'version.py')
-    stdout = execute("git describe --tags --dirty --long --always").strip()
-    pattern = re.compile(r'([\w\d\.]+)-(\d+)-g([\w\d]+)(?:-(dirty))?')
-    match = pattern.search(stdout)
 
-    # If the information is unavailable (execution of this function outside the
-    # development environment), file creation is not possible
-    if not stdout or match is None:
+    # If the ".git" directory exists, this function is executed in the
+    # development environment, otherwise it's a release.
+    if not pathlib.Path(WORKING_DIRECTORY, '.git').exists():
         pattern = re.compile(r'return "(\d+\.\d+\.\d+)"')
         with open(module, "r") as stream:
             for line in stream:
@@ -92,8 +89,22 @@ def revision():
                     return match.group(1)
         raise AssertionError()
 
-    version = match.group(1)
-    sha1 = match.group(3)
+    stdout = execute("git describe --tags --dirty --long --always").strip()
+    pattern = re.compile(r'([\w\d\.]+)-(\d+)-g([\w\d]+)(?:-(dirty))?')
+    match = pattern.search(stdout)
+    if match is None:
+        # No tag found, use the last commit
+        pattern = re.compile(r'([\w\d]+)(?:-(dirty))?')
+        match = pattern.search(stdout)
+        assert match is not None, f"Unable to parse git output {stdout!r}"
+        version = "0.0"
+        sha1 = match.group(1)
+    else:
+        version = match.group(1)
+        commits = int(match.group(2))
+        sha1 = match.group(3)
+        if commits != 0:
+            version += f".dev{commits}"
 
     stdout = execute("git log  %s -1 --format=\"%%H %%at\"" % sha1)
     stdout = stdout.strip().split()
@@ -104,6 +115,12 @@ def revision():
     meta = pathlib.Path(WORKING_DIRECTORY, 'conda', 'meta.yaml')
     if meta.exists():
         update_meta(meta, version)
+
+    # Updating the version number description for sphinx
+    conf = pathlib.Path(WORKING_DIRECTORY, 'docs', 'source', 'conf.py')
+    with open(conf, "r") as stream:
+        lines = stream.readlines()
+    pattern = re.compile(r'(\w+)\s+=\s+(.*)')
 
     # Updating the version number description for sphinx
     conf = pathlib.Path(WORKING_DIRECTORY, 'docs', 'source', 'conf.py')
@@ -126,11 +143,11 @@ def revision():
 
     # Finally, write the file containing the version number.
     with open(module, 'w') as handler:
-        handler.write('''"""
-# Copyright (c) 2022 CNES
+        handler.write('''# Copyright (c) 2022 CNES
 #
 # All rights reserved. Use of this source code is governed by a
 # BSD-style license that can be found in the LICENSE file.
+"""
 Get software version information
 ================================
 """
