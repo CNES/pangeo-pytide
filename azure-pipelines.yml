@@ -1,0 +1,132 @@
+trigger:
+ - master
+ - develop
+jobs:
+- job:
+  displayName: Ubuntu-20.04
+  pool:
+    vmImage: 'ubuntu-20.04'
+  strategy:
+    matrix:
+      Python37:
+        python.version: '3.7'
+      Python38:
+        python.version: '3.8'
+      Python39:
+        python.version: '3.9'
+      Python310:
+        python.version: '3.10'
+  steps:
+  - checkout: self
+    fetchDepth: 1
+  - bash: git submodule update --init --recursive
+    displayName: Initialize the submodules
+  - script: |
+      sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+      sudo apt-get update
+      sudo apt-get install -y libc++-dev libc++abi-dev libc++abi1 libstdc++-10-dev gcc-10 g++-10
+      sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 100
+      sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 100
+    displayName: Install GCC
+  - bash: echo "##vso[task.prependpath]$CONDA/bin"
+    displayName: Add conda to PATH
+  - bash: conda create --yes --quiet --name Build
+    displayName: Create Anaconda environment
+  - bash: |
+      source activate Build
+      conda install --yes --quiet -c conda-forge mamba python=$PYTHON_VERSION
+    displayName: Install mamba
+  - bash: |
+      source activate Build
+      mamba install --yes --quiet -c conda-forge cmake eigen mkl-devel numpy python pytest setuptools
+    displayName: Install build requirements
+  - bash: |
+      source activate Build
+      python setup.py build
+    displayName: Build package
+  - bash: |
+      source activate Build
+      pytest -vv
+    displayName: Test cases
+- job:
+  displayName: macOS-10.15
+  pool:
+    vmImage: 'macOS-10.15'
+  strategy:
+    matrix:
+      Python37:
+        python.version: '3.7'
+      Python38:
+        python.version: '3.8'
+      Python39:
+        python.version: '3.9'
+      Python310:
+        python.version: '3.10'
+  steps:
+  - checkout: self
+    fetchDepth: 1
+  - bash: git submodule update --init --recursive
+    displayName: Initialize the submodules
+  - bash: echo "##vso[task.prependpath]$CONDA/bin"
+    displayName: Add conda to PATH
+  - bash: sudo chown -R $USER $CONDA
+    displayName: Take ownership of conda installation
+  - bash: conda create --yes --quiet --name Build
+    displayName: Create Anaconda environment
+  - bash: |
+      source activate Build
+      conda install --yes --quiet -c conda-forge mamba python=$PYTHON_VERSION
+    displayName: Install mamba
+  - bash: |
+      source activate Build
+      mamba install --yes --quiet -c conda-forge cmake eigen mkl-devel numpy python pytest setuptools
+    displayName: Install build requirements
+  - bash: |
+      source activate Build
+      python setup.py build
+    displayName: Build package
+  - bash: |
+      source activate Build
+      pytest -vv
+    displayName: Test cases
+- job:
+  displayName: windows-2019
+  pool:
+    vmImage: 'windows-2019'
+  strategy:
+    matrix:
+      Python37:
+        python.version: '3.7'
+      Python38:
+        python.version: '3.8'
+      Python39:
+        python.version: '3.9'
+      Python310:
+        python.version: '3.10'
+  steps:
+  - checkout: self
+    fetchDepth: 1
+  - script: git submodule update --init --recursive
+    displayName: Initialize the submodules
+  - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
+    displayName: Add conda to PATH
+  - bash: echo "##vso[task.prependpath]$CONDA/bin"
+    displayName: Add conda to PATH
+  - script: conda create --yes --quiet --name Build
+    displayName: Create Anaconda environment
+  - script: |
+      call activate Build
+      conda install --yes --quiet -c conda-forge mamba python=%PYTHON_VERSION%
+    displayName: Install mamba
+  - script: |
+      call activate Build
+      mamba install --yes --quiet -c conda-forge cmake eigen mkl-devel numpy python pytest setuptools
+    displayName: Install build requirements
+  - script: |
+      call activate Build
+      python setup.py build --generator="Visual Studio 16 2019"
+    displayName: Build package
+  - script: |
+      call activate Build
+      pytest -vv
+    displayName: Test cases
