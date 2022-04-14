@@ -302,14 +302,15 @@ class BuildExt(setuptools.command.build_ext.build_ext):
         * `cfg`: config, one of {"debug", "release"}
         """
         build_args = ["--config", cfg]
-        is_windows = platform.system() == "windows"
+        is_windows = platform.system() == "Windows"
         if is_windows:
+            build_args += ['--', '/m']
             if self.verbose:  # type: ignore
                 build_args += ["/verbosity:n"]
         else:
             build_args += ["--", "-j%d" % os.cpu_count()]
-        if self.verbose:  # type: ignore
-            build_args.insert(0, "--verbose")
+            if self.verbose:  # type: ignore
+                build_args.insert(0, "--verbose")
         return build_args
 
     def build_cmake(self, ext):
