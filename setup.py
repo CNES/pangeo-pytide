@@ -380,6 +380,12 @@ class Build(distutils.command.build.build):
         super().run()
 
 
+def long_description():
+    """Reads the README file."""
+    with open(pathlib.Path(WORKING_DIRECTORY, "README.md")) as stream:
+        return stream.read()
+
+
 def main():
     setuptools.setup(
         name='pytide',
@@ -403,6 +409,7 @@ def main():
         author='CNES/CLS',
         license="BSD License",
         ext_modules=[CMakeExtension(name="pytide.core")],
+        long_description=long_description(),
         setup_requires=[],
         scripts=["src/scripts/mit_gcm_detiding.py"],
         install_requires=["numpy"],
