@@ -376,6 +376,7 @@ def main():
         license='BSD License',
         ext_modules=[CMakeExtension(name='pytide.core')],
         long_description=long_description(),
+        long_description_content_type='text/markdown',
         setup_requires=[],
         scripts=['src/scripts/mit_gcm_detiding.py'],
         install_requires=['numpy'],
