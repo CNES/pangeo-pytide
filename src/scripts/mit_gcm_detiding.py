@@ -52,27 +52,27 @@ def create_result(template,
                   wave_table,
                   chunk=None,
                   dtype=numpy.float32):
-    src = netCDF4.Dataset(template, mode="r")
-    tgt = netCDF4.Dataset(target, mode="w")
+    src = netCDF4.Dataset(template, mode='r')
+    tgt = netCDF4.Dataset(target, mode='w')
 
     if chunk is None:
         chunk = None
 
-    square_size = len(src.variables["j"][chunk])
+    square_size = len(src.variables['j'][chunk])
 
     try:
         tgt.setncatts(src.__dict__)
         for dimname, dim in src.dimensions.items():
-            if dimname == "time":
+            if dimname == 'time':
                 continue
             size = len(dim)
             if dimname in ['j', 'i']:
                 size = square_size
             tgt.createDimension(dimname, size)
-        tgt.createDimension("wave", len(wave_table))
+        tgt.createDimension('wave', len(wave_table))
 
-        var = tgt.createVariable("wave", str, ('wave', ))
-        var.setncattr("long_name", "Tidal constituents")
+        var = tgt.createVariable('wave', str, ('wave', ))
+        var.setncattr('long_name', 'Tidal constituents')
         for idx, item in enumerate(wave_table):
             var[idx] = item.name()
 
@@ -106,14 +106,14 @@ def create_result(template,
 
         # Create variables
         ncvar, _, _ = variable_properties(variable)
-        var = tgt.createVariable(f"{variable}_real",
+        var = tgt.createVariable(f'{variable}_real',
                                  dtype, ('face', 'wave', 'j', 'i'),
                                  fill_value=numpy.nan,
                                  zlib=True,
                                  complevel=9)
         var.setncatts(attributes)
 
-        var = tgt.createVariable(f"{variable}_imag",
+        var = tgt.createVariable(f'{variable}_imag',
                                  dtype, ('face', 'wave', 'j', 'i'),
                                  fill_value=numpy.nan,
                                  zlib=True,
@@ -128,7 +128,7 @@ def create_result(template,
 def write_one_face(path, waves, face, variable):
     if isinstance(waves, numpy.ma.MaskedArray):
         waves = waves.data
-    with netCDF4.Dataset(path, mode="a") as ds:
+    with netCDF4.Dataset(path, mode='a') as ds:
         var = ds.variables[f'{variable}_real']
         var[face, :, :, :] = waves.real
         var = ds.variables[f'{variable}_imag']
@@ -138,14 +138,14 @@ def write_one_face(path, waves, face, variable):
 def load_faces(dirname, face, variable, period, chunk):
     """Load a face from the time series."""
     ds = xarray.open_zarr(dirname)
-    ds = ds.transpose("face", "j", "i", "time")
+    ds = ds.transpose('face', 'j', 'i', 'time')
     return ds.isel(face=face, j=chunk, i=chunk, time=period)[variable].data
 
 
 def pretty_size(size):
     """Display a size readable by a human."""
     if size in [0, 1]:
-        return f"{size} octet"
+        return f'{size} octet'
 
     exponent = min(int(math.log(size, 1000)), len(UNITS) - 1)
     quotient = float(size) / 1000**exponent
@@ -161,9 +161,9 @@ def dask_array_properties(da):
         chunks_size *= item[0]
     chunks_size *= da.dtype.itemsize
     nblocks = numpy.array(da.numblocks).prod()
-    return "array size=" + pretty_size(
-        da.nbytes) + f" (#{nblocks} * " + pretty_size(
-            chunks_size) + "); chunk size=" + str(da.chunksize)
+    return 'array size=' + pretty_size(
+        da.nbytes) + f' (#{nblocks} * ' + pretty_size(
+            chunks_size) + '); chunk size=' + str(da.chunksize)
 
 
 def dask_array_rechunk(da, nblocks, axis=2):
@@ -218,102 +218,102 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
 def valid_directory(s):
     if not pathlib.Path(s).is_dir():
         raise argparse.ArgumentTypeError(
-            "The directory does not exist or is not readable: " + s)
+            'The directory does not exist or is not readable: ' + s)
     return s
 
 
 def valid_slice(s):
-    if s == "None":
+    if s == 'None':
         return None
     try:
         return int(s)
     except ValueError:
-        raise argparse.ArgumentTypeError("invalid slice value:" + s)
+        raise argparse.ArgumentTypeError('invalid slice value:' + s)
 
 
 def valid_date(s):
     try:
-        date = datetime.datetime.strptime("%Y-%m-%dT%H:%M:%S")
+        date = datetime.datetime.strptime('%Y-%m-%dT%H:%M:%S')
         return numpy.datetime64(date)
     except ValueError:
-        raise argparse.ArgumentTypeError("invalid date value:" + s)
+        raise argparse.ArgumentTypeError('invalid date value:' + s)
 
 
 def usage():
     parser = argparse.ArgumentParser(
-        description="Harmonic analysis for MIT/GCM")
-    parser.add_argument("dirname",
-                        help="Zarr directory containing MIT/GCM data",
+        description='Harmonic analysis for MIT/GCM')
+    parser.add_argument('dirname',
+                        help='Zarr directory containing MIT/GCM data',
                         type=valid_directory)
-    parser.add_argument("template",
-                        help="Template of the NetCDF file to be taken into "
-                        "account",
+    parser.add_argument('template',
+                        help='Template of the NetCDF file to be taken into '
+                        'account',
                         type=argparse.FileType(mode='r'))
-    parser.add_argument("variable",
-                        help="Variable of the dataset to be processed")
-    parser.add_argument("result", help="Path to the NetCDF File to create")
-    parser.add_argument("--log",
+    parser.add_argument('variable',
+                        help='Variable of the dataset to be processed')
+    parser.add_argument('result', help='Path to the NetCDF File to create')
+    parser.add_argument('--log',
                         metavar='PATH',
-                        help="path to the logbook to use",
-                        type=argparse.FileType("w"))
-    parser.add_argument("--face",
-                        help="face to process",
+                        help='path to the logbook to use',
+                        type=argparse.FileType('w'))
+    parser.add_argument('--face',
+                        help='face to process',
                         metavar='INT',
                         type=int,
-                        nargs="+",
+                        nargs='+',
                         default=list(range(13)))
-    parser.add_argument("--time_chunk",
-                        help="Slice of the time axis to process",
+    parser.add_argument('--time_chunk',
+                        help='Slice of the time axis to process',
                         metavar='INT',
                         nargs=3,
                         type=valid_slice,
                         default=None)
-    parser.add_argument("--start_date",
-                        help="Start date to process",
+    parser.add_argument('--start_date',
+                        help='Start date to process',
                         metavar='DATE',
                         nargs=1,
                         type=valid_date,
                         default=START_DATE)
-    parser.add_argument("--end_date",
-                        help="End date to process",
+    parser.add_argument('--end_date',
+                        help='End date to process',
                         metavar='DATE',
                         nargs=1,
                         type=valid_date,
                         default=END_DATE)
-    parser.add_argument("--var_chunk",
-                        help="Slice of the variable to process",
+    parser.add_argument('--var_chunk',
+                        help='Slice of the variable to process',
                         metavar='INT',
                         nargs=3,
                         type=valid_slice,
                         default=None)
-    parser.add_argument("--scheduler_file",
-                        help="Path to a file with scheduler information",
+    parser.add_argument('--scheduler_file',
+                        help='Path to a file with scheduler information',
                         metavar='PATH',
-                        type=argparse.FileType("r"),
+                        type=argparse.FileType('r'),
                         default=None)
-    parser.add_argument("--local-cluster",
-                        help="Use a dask local cluster for testing purpose",
-                        action="store_true")
+    parser.add_argument('--local-cluster',
+                        help='Use a dask local cluster for testing purpose',
+                        action='store_true')
     consitutents = pytide.WaveTable.known_constituents()
-    parser.add_argument("--tidal_constituents",
-                        help="List of tidal waves to be studied. "
-                        "Choose from the following consitutents: " +
-                        ", ".join(consitutents),
+    parser.add_argument('--tidal_constituents',
+                        help='List of tidal waves to be studied. '
+                        'Choose from the following consitutents: ' +
+                        ', '.join(consitutents),
                         metavar='WAVE',
-                        nargs="+",
+                        nargs='+',
                         choices=consitutents,
                         default=[])
     parser.add_argument(
-        "--nblocks",
-        help="Number of grid divisions for the calculation of the harmonic"
-        "analysis.",
+        '--nblocks',
+        help='Number of grid divisions for the calculation of the harmonic'
+        'analysis.',
         type=int,
         default=200)
     args = parser.parse_args()
     if not args.local_cluster:
         if args.scheduler_file is None:
             args.scheduler_file = str(pathlib.Path.home().joinpath(
-                pathlib.Path("scheduler.json")))
+                pathlib.Path('scheduler.json')))
         argparse.FileType('r')(args.scheduler_file)
 
     def setup_chunk(chunk):
@@ -332,7 +332,7 @@ def setup_logging(filename):
     kwargs = dict(format='%(asctime)s: %(message)s', level=logging.INFO)
     if filename is not None:
         filename.close()
-        kwargs["filename"] = filename.name
+        kwargs['filename'] = filename.name
     logging.basicConfig(**kwargs)
 
 
@@ -350,18 +350,18 @@ def main():
     # be processed.
     time_series = t_axis(args.dirname)
     period = (time_series >= args.start_date) & (time_series <= args.end_date)
-    logging.info("number of files to process %d", len(time_series[period]))
-    logging.info("period [%s, %s]", time_series[period].min(),
+    logging.info('number of files to process %d', len(time_series[period]))
+    logging.info('period [%s, %s]', time_series[period].min(),
                  time_series[period].max())
 
     wave_table = pytide.WaveTable(args.tidal_constituents)
-    logging.info("%d tidal constituents to be analysed", len(wave_table))
+    logging.info('%d tidal constituents to be analysed', len(wave_table))
 
     f, v0u = compute_nodal_modulations(client, wave_table, time_series[period])
 
     if not os.path.exists(args.result):
         # Create the result file
-        logging.info("create the result file %r", args.result)
+        logging.info('create the result file %r', args.result)
         create_result(args.template.name,
                       args.result,
                       args.variable,
@@ -377,26 +377,26 @@ def main():
 
     # Load the time series
     for face in args.face:
-        logging.info("processing face %d", face)
+        logging.info('processing face %d', face)
         ds = load_faces(args.dirname,
                         face,
                         args.variable,
                         period,
                         chunk=args.var_chunk)
-        logging.info("loaded %s", dask_array_properties(ds))
+        logging.info('loaded %s', dask_array_properties(ds))
         ds = ds.rechunk(dask_array_rechunk(ds, args.nblocks))
-        logging.info("fragmented %s", dask_array_properties(ds))
+        logging.info('fragmented %s', dask_array_properties(ds))
         future = apply_along_axis(pytide.WaveTable.harmonic_analysis, 2, ds,
                                   *(f, v0u))
         result = future.compute()
         result = numpy.transpose(result, [2, 0, 1])
-        logging.info("write face #%d", face)
+        logging.info('write face #%d', face)
         write_one_face(args.result, result, face, args.variable)
-        logging.info("calculation completed for face #%d", face)
+        logging.info('calculation completed for face #%d', face)
         client.cancel(ds)
 
-    logging.info("calculation done")
+    logging.info('calculation done')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

@@ -42,30 +42,30 @@ class Wave(unittest.TestCase):
 
 class WaveTable(unittest.TestCase):
     DATASET = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                           "dataset", "fes_tide_time_series.nc")
+                           'dataset', 'fes_tide_time_series.nc')
 
     def test_init(self):
         wt = core.WaveTable()
         self.assertEqual(len(wt), 67)
         self.assertEqual(len([item for item in wt]), 67)
-        self.assertEqual(wt.wave("M2"), wt.wave(core.Wave.Ident.kM2))
-        self.assertNotEqual(wt.wave("M2"), wt.wave(core.Wave.Ident.kK1))
-        self.assertTrue(wt.wave("__M2__") is None)
+        self.assertEqual(wt.wave('M2'), wt.wave(core.Wave.Ident.kM2))
+        self.assertNotEqual(wt.wave('M2'), wt.wave(core.Wave.Ident.kK1))
+        self.assertTrue(wt.wave('__M2__') is None)
         self.assertListEqual(sorted(wt.known_constituents()),
                              sorted([item.name() for item in wt]))
         for item in wt:
             self.assertEqual(item.ident,
-                             getattr(core.Wave.Ident, "k" + item.name()))
+                             getattr(core.Wave.Ident, 'k' + item.name()))
 
-        wt = core.WaveTable(["M2", "K1", "O1", "P1", "Q1", "S1"])
+        wt = core.WaveTable(['M2', 'K1', 'O1', 'P1', 'Q1', 'S1'])
         self.assertEqual(len(wt), 6)
         self.assertListEqual(sorted([item.name() for item in wt]),
-                             sorted(["M2", "K1", "O1", "P1", "Q1", "S1"]))
+                             sorted(['M2', 'K1', 'O1', 'P1', 'Q1', 'S1']))
 
     def test_wave(self):
         aa = core.AstronomicAngle(datetime.datetime(2000, 1, 1))
-        wt = core.WaveTable(["M2"])
-        wave = wt.wave("M2")
+        wt = core.WaveTable(['M2'])
+        wave = wt.wave('M2')
         self.assertAlmostEqual(wave.freq * 86400,
                                12.140833182614747,
                                delta=1e-6)
@@ -73,7 +73,7 @@ class WaveTable(unittest.TestCase):
 
     def test_analysis(self):
         with netCDF4.Dataset(self.DATASET) as dataset:
-            time = dataset['time'][:].astype("datetime64[us]")
+            time = dataset['time'][:].astype('datetime64[us]')
             h = dataset['ocean'][:] * 1e-2
 
         wt = core.WaveTable()
@@ -94,7 +94,7 @@ class WaveTable(unittest.TestCase):
 
     def test_reentering(self):
         with netCDF4.Dataset(self.DATASET) as dataset:
-            time = dataset['time'][:4096].astype("datetime64[us]")
+            time = dataset['time'][:4096].astype('datetime64[us]')
             h = dataset['ocean'][:4096] * 1e-2
 
         wt = core.WaveTable()
@@ -115,5 +115,5 @@ class WaveTable(unittest.TestCase):
             self.assertTrue(numpy.all(first == item))
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()

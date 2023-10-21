@@ -15,7 +15,7 @@ import numpy
 
 if TYPE_CHECKING and distutils.version.LooseVersion(
         numpy.__version__) >= distutils.version.LooseVersion(
-            "1.20") and sys.version_info >= (3, 9):
+            '1.20') and sys.version_info >= (3, 9):
     import numpy.typing
     NDArrayDateTime64 = numpy.typing.NDArray[numpy.datetime64]
     NDArrayComplex128 = numpy.typing.NDArray[numpy.complex128]
@@ -48,10 +48,11 @@ class WaveTable(core.WaveTable):
     def __repr__(self) -> str:
         constituents = self.constituents()
         if len(constituents) > 9:
-            constituents = constituents[:4] + ["..."] + constituents[-4:]
+            constituents = constituents[:4] + ['...'] + constituents[-4:]
 
-        return "%s.%s(%s)" % (self.__class__.__module__,
-                              self.__class__.__name__, ', '.join(constituents))
+        return '{}.{}({})'.format(self.__class__.__module__,
+                                  self.__class__.__name__,
+                                  ', '.join(constituents))
 
     def freq(self) -> NDArrayFloat64:
         """Gets the waves frequencies in radians per seconds."""
@@ -90,7 +91,7 @@ class WaveTable(core.WaveTable):
                 isinstance(item, datetime.datetime) for item in dates):
             epoch = numpy.array([core.timestamp(item) for item in dates]) * 1e6
             return super().compute_nodal_modulations(
-                epoch.astype("datetime64[us]"))
+                epoch.astype('datetime64[us]'))
         # The method throws an error if the dates are not datetime64
         return super().compute_nodal_modulations(dates)  # type: ignore
 
@@ -219,7 +220,7 @@ class WaveDict(WaveTable):
             numpy.ndarray: The tide calculated for the time series provided.
         """
         if len(wave) != len(self):
-            raise ValueError("wave must contain as many items as tidal "
-                             "constituents loaded")
+            raise ValueError('wave must contain as many items as tidal '
+                             'constituents loaded')
         wave_properties = numpy.array([wave[item] for item in self])
         return super().tide_from_tide_series(dates, wave_properties)
