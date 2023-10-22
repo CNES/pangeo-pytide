@@ -113,7 +113,10 @@ if(NOT POW_FUNCTION_EXISTS)
 endif()
 
 # Python
-find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+find_package(
+  Python3
+  COMPONENTS Interpreter Development
+  REQUIRED)
 
 # Eigen3
 find_package(Eigen3 3.3.1 REQUIRED)
