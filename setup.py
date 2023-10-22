@@ -274,7 +274,7 @@ class BuildExt(setuptools.command.build_ext.build_ext):
         cmake_args = [
             '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + str(extdir),
             '-DCMAKE_PREFIX_PATH=' + sys.prefix,
-            '-DPython_EXECUTABLE=' + sys.executable,
+            '-DPython3_EXECUTABLE=' + sys.executable,
         ] + self.set_cmake_user_options()
 
         is_windows = platform.system() == 'Windows'

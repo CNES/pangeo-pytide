@@ -113,8 +113,7 @@ if(NOT POW_FUNCTION_EXISTS)
 endif()
 
 # Python
-find_package(Python COMPONENTS Interpreter Development)
-include_directories(${Python_INCLUDE_DIRS})
+find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
 
 # Eigen3
 find_package(Eigen3 3.3.1 REQUIRED)
