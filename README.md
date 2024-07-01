@@ -1,9 +1,10 @@
-[![conda](https://anaconda.org/conda-forge/pytide/badges/installer/conda.svg?service=github)](https://www.anaconda.com/distribution/)
 [![platforms](https://anaconda.org/conda-forge/pytide/badges/platforms.svg?service=github)](https://anaconda.org/conda-forge/pytide)
 [![latest-release-date](https://anaconda.org/conda-forge/pytide/badges/latest_release_date.svg?service=github)](https://github.com/CNES/pangeo-pytide/commits/master)
 [![license](https://anaconda.org/conda-forge/pytide/badges/license.svg?service=github)](https://opensource.org/licenses/BSD-3-Clause)
 
 # pangeo-pytide
+
+# This project is archived and no longer maintained. The functionality of this project has been integrated into the [pyfes](https://github.com/CNES/pangeo-pytide) project.
 
 ## About
 
